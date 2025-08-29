@@ -267,91 +267,9 @@ var BrigCells = [];
 var ADH_HumanCharacter_SetIsSpiritWalking = new NativeFunction(base.add(0xD70310), 'void', ['pointer', 'int8', 'float'], 'win64');
 var AActor_SetActorRelativeScale3D = new NativeFunction(base.add(0x22e88b0), 'void', ['pointer', 'pointer'], 'win64');
 var UCapsuleComponent_SetCapsuleSize = new NativeFunction(base.add(0x2407250), 'void', ['pointer', 'float', 'float', 'int8'], 'win64');
-function addHumanCharacterRelativeScale3D(ADH_HumanCharacter, Value) {
-    try {
-        // 检查输入参数
-        if (!ADH_HumanCharacter || ADH_HumanCharacter.isNull()) {
-            logInfo("[SetActorRelativeScale3D] 错误: ADH_HumanCharacter 为空或无效");
-            return false;
-        }
-        
-        // 验证缩放值
-        if (typeof Value !== 'number') {
-            logInfo("[SetActorRelativeScale3D] 错误: 缩放值必须是数字");
-            return false;
-        }
-        
-        // 获取角色的RootComponent
-        var rootComponentPtrAddr = ADH_HumanCharacter.add(0x130);
-        var rootComponent = rootComponentPtrAddr.readPointer();
-        
-        if (rootComponent.isNull()) {
-            logInfo("[Scale Read] 无法获取角色RootComponent");
-            return false;
-        }
-        
-        // 获取RelativeScale3D
-        var relativeScale3DAddr = rootComponent.add(0x134);
-        var scaleX = relativeScale3DAddr.readFloat();
-        var scaleY = relativeScale3DAddr.add(4).readFloat();
-        var scaleZ = relativeScale3DAddr.add(8).readFloat();
-        scaleX += Value;
-        scaleY += Value;
-        scaleZ += Value;
-        logInfo("[Scale Read] 角色当前缩放值 - X: " + scaleX + ", Y: " + scaleY + ", Z: " + scaleZ);
+var USceneComponent_UpdateComponentToWorld = new NativeFunction(base.add(0x79cf20),'void', ['pointer', 'int32', 'int8'],'win64');
+var AActor_ForceNetUpdate = new NativeFunction(base.add(0x22d8050), 'void', ['pointer'], 'win64');
 
-        // 创建 FVector 结构体来存储缩放值
-        // FVector 结构: X (4 bytes) + Y (4 bytes) + Z (4 bytes) = 12 bytes
-        var scaleVector = Memory.alloc(12);
-        scaleVector.writeFloat(scaleX);
-        scaleVector.add(4).writeFloat(scaleY);
-        scaleVector.add(8).writeFloat(scaleZ);
-        
-        // 调用 AActor::SetActorRelativeScale3D 函数
-        AActor_SetActorRelativeScale3D(ADH_HumanCharacter, scaleVector);
-        
-        // 同时直接修改RelativeScale3D值确保立即生效
-        relativeScale3DAddr.writeFloat(scaleX);
-        relativeScale3DAddr.add(4).writeFloat(scaleY);
-        relativeScale3DAddr.add(8).writeFloat(scaleZ);
-        
-        // 尝试更新CapsuleComponent（碰撞体）
-        try {
-            var capsuleComponent = ADH_HumanCharacter.add(0x290).readPointer(); // CapsuleComponent偏移
-            if (!capsuleComponent.isNull()) {
-                // 更新胶囊体半径和高度（根据缩放比例调整）
-                var capsuleRadiusAddr = capsuleComponent.add(0x184); // 假设偏移量
-                var capsuleHalfHeightAddr = capsuleComponent.add(0x188); // 假设偏移量
-                
-                // 读取原始值并根据缩放调整
-                var originalRadius = capsuleRadiusAddr.readFloat() * (scaleX / (scaleX - Value));
-                var originalHeight = capsuleHalfHeightAddr.readFloat() * (scaleZ / (scaleZ - Value));
-                
-                capsuleRadiusAddr.writeFloat(originalRadius * (scaleX / scaleX));
-                capsuleHalfHeightAddr.writeFloat(originalHeight * (scaleZ / scaleZ));
-                
-                logInfo("[Scale Update] 已更新CapsuleComponent");
-            }
-        } catch (capsuleError) {
-            logInfo("[Scale Update] 警告: 无法更新CapsuleComponent - " + capsuleError);
-        }
-        
-        // 强制更新ComponentToWorld
-        try {
-            // 如果能找到UpdateComponentToWorld函数地址，可以调用它
-            // var updateFunc = new NativeFunction(base.add(0x???????), 'void', ['pointer'], 'win64');
-            // updateFunc(rootComponent);
-        } catch (updateError) {
-            logInfo("[Scale Update] 警告: 无法调用UpdateComponentToWorld - " + updateError);
-        }
-        
-        logInfo("[SetActorRelativeScale3D] 成功设置角色缩放为 X:" + scaleX + ", Y:" + scaleY + ", Z:" + scaleZ);
-        return true;
-    } catch (error) {
-        logInfo("[SetActorRelativeScale3D] 设置缩放时发生错误: " + error);
-        return false;
-    }
-}
 function FreePrisonerExplorer() {
     for(var i = 0; i < BrigCells.length; i++){
         var ADH_BrigCell = BrigCells[i];
@@ -402,7 +320,6 @@ Interceptor.attach(ADH_BrigCell_AddPrisoner, {
         var IsThrall = PlayerState.add(0x572).readU8();
         try{
             ADH_BrigCell_FreePrisoner(ADH_BrigCell, ptr(0));
-            
         }catch(e){
             logInfo(e);
         }
@@ -495,7 +412,10 @@ Interceptor.attach(ADH_HumanCharacter_AddStartingInventory_addr, {
         //ADH_HumanCharacter_Died(ADH_HumanCharacter, ptr(0), ptr(0), 500);
         if(number == ExplorerRole && !bHasDied) {
             ADH_HumanCharacter.add(0x590).writeFloat(DeathUnpossessDelay);
-            ADH_HumanCharacter_Died(ADH_HumanCharacter, ptr(0), ptr(0), 500);
+            var timer = setTimeout(function(){
+                ADH_HumanCharacter_Died(ADH_HumanCharacter, ptr(0), ptr(0), 500);
+            }, 1000);
+            
         }
         
     },onLeave : function (ret) { 
@@ -646,6 +566,7 @@ Interceptor.attach(ADH_Character_SnareExpired_addr, {
         
     },onLeave : function (ret) { 
         var ADH_HumanCharacter = this.ADH_HumanCharacter;
-        addHumanCharacterRelativeScale3D(ADH_HumanCharacter, 0.1);
+        //踩中夹子执行某效果
+
     }
 })

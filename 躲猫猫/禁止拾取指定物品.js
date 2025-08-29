@@ -1,8 +1,10 @@
 var base = Module.findBaseAddress('DreadHungerServer-Win64-Shipping.exe');
 var UDH_InventoryManager_AddInventory_addr = base.add(0xDBB960);
+var ADH_Inventory_Use_Implementation_addr = base.add(0xdeb340);
 var StaticFindObject = new NativeFunction(base.add(0x137AAA0), 'pointer', ['pointer', 'pointer', 'pointer', 'int8'], 'win64');
 var UClass_GetPrivateStaticClass = new NativeFunction(base.add(0x11F02E0), 'pointer', [], 'win64');
 var ADH_PlayerState_SetIsDead = new NativeFunction(base.add(0xE4E700), 'void', ['pointer', 'int8'], 'win64');
+var ADH_HumanCharacter_SetIsSpiritWalking = new NativeFunction(base.add(0xD70310), 'void', ['pointer', 'int8', 'float'], 'win64');
 function findClassByName(ClassName) {
     return findObjectByName(ClassName, UClass_GetPrivateStaticClass());
 }
@@ -88,6 +90,29 @@ Interceptor.attach(UDH_InventoryManager_AddInventory_addr, {
                 }
             }
 
+        }
+    }
+});
+
+var SpecialInventory1 = [
+    '/Game/Blueprints/Inventory/Syringe/BP_Inventory_Laudanum.BP_Inventory_Laudanum_C'
+];
+
+Interceptor.attach(ADH_Inventory_Use_Implementation_addr, {
+    onEnter : function (args) {
+        this.ADH_Inventory = args[0];
+    },onLeave : function (retval) { 
+        var ADH_Inventory = this.ADH_Inventory;
+        var ADH_HumanCharacter = ADH_Inventory.add(0x268).readPointer();
+        var TargetItem = ADH_Inventory.add(0x10).readPointer();
+        for(var i = 0; i < SpecialInventory1.length; i++){
+            var Clazz = findClassByName(SpecialInventory1[i]);
+            if(Clazz.isNull()) {
+                continue;
+            }
+            if(TargetItem.equals(Clazz)){
+                ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 2);
+            }
         }
     }
 });
