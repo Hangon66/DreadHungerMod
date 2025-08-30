@@ -91,6 +91,20 @@ var ActorToSpawn = [[
     [-60193, -29169, 20],
     [2, 2, 2]
 
+],
+[
+    "/Game/Blueprints/Ship/BP_CrowsNestRigging.BP_CrowsNestRigging_C",
+    [0, 0, 0],
+    [-57888, -28422, 1000],
+    [1, 1, 1]  
+
+],
+[
+    "/Game/Blueprints/Ship/BP_CrowsNestRigging.BP_CrowsNestRigging_C",
+    [0, 0, 0],
+    [-57943, -28022, 1000],
+    [1, 1, 1]  
+
 ]];
 var ADH_GameMode_InitGame_addr = base.add(0xd9b220);
 Interceptor.attach(ADH_GameMode_InitGame_addr, {

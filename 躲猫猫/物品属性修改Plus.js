@@ -52,7 +52,7 @@ var InventoryTable = {
     '/Game/Blueprints/Inventory/Musket/BP_Musket_Inventory.BP_Musket_Inventory_C' : {      //大枪
         'MaxStackCount' : 1,
 		'DurabilityUses' : 999,
-        'Damage' : 30
+        'Damage' : 50
     },
 	'/Game/Blueprints/Inventory/Sword/BP_Sword_Inventory.BP_Sword_Inventory_C' : {      //军刀
 		'MaxStackCount' : 1,
@@ -80,7 +80,10 @@ var InventoryTable = {
         'MaxStackCount' : 999
     },
     '/Game/Blueprints/Inventory/WoodAxe/BP_WoodAxe_Inventory.BP_WoodAxe_Inventory_C' : {      //斧头
-        'MaxStackCount' : 1
+        'MaxStackCount' : 1,
+        'Damage' : 25,
+        'ThrowCost' : 0,
+        'ThrowDelay' : 0
     },
     '/Game/Blueprints/Inventory/IceAxe/BP_IceAxe_Inventory.BP_IceAxe_Inventory_C' : {      //冰镐
         'MaxStackCount' : 1

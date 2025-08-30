@@ -23,9 +23,16 @@ var RoleInitInventory = new Map([
         [8,1],
         [28,1],
         [24,5],
+        [4,5],
         [23,99],
         [29,30],
+        [16,1],
         [9,200]
+    ]],
+    ['Thrall', [
+        [3,1],
+        [24,1],
+        [16,1],
     ]]
 ]);
 function logInfo(Info) {
@@ -166,8 +173,9 @@ Interceptor.attach(ADH_HumanCharacter_Died_addr, {
     },onLeave : function(retval) {
         try{
             var ADH_HumanCharacter = this.ADH_HumanCharacter;
+            var bIsDoppelganger = ADH_HumanCharacter.add(0x11D2).readU8();
             var IsThrall = this.IsThrall;
-            if(IsThrall){
+            if(IsThrall && !bIsDoppelganger){
                 sendRemainingTotalLife();
             }else{
                 var ADH_GameState = getGameState();
@@ -350,8 +358,11 @@ Interceptor.attach(ADH_BrigCell_AddPrisoner, {
             InitExplorerInventory(PlayerState);
             //设置无敌
             ADH_HumanCharacter.add(0x11D0).writeU8(1);
+            //5连跳
+            ADH_HumanCharacter.add(0x344).writeU32(5);
         }else{
             //狼人复活灵界
+            InitThrallInventory(PlayerState);
             ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 8);
         }
         // if(!BrigCellFlag  && !IsThrall){
@@ -489,6 +500,25 @@ function InitExplorerInventory(PlayerState) {
 
 }
 
+function InitThrallInventory(PlayerState) {
+    //logInfo('InitExplorerInventory');
+    var DesiredInventory = RoleInitInventory.get('Thrall');
+    if (DesiredInventory.length == 0) {
+        return;
+    }
+    for (var i = 0; i < DesiredInventory.length; i++) { 
+        var InventoryInfo = DesiredInventory[i];
+        var ClassId = InventoryInfo[0];
+        var Count = InventoryInfo[1];
+        var Clazz = RegisterItemClass.get(ClassId);
+        //logInfo('InitExplorerInventory ' + ClassId + ' ' + Count+ ' ' + Clazz);
+        for(var j = 0; j < Count; j++){
+            giveInventory(PlayerState, Clazz);
+        }
+    }
+
+}
+
 /**
  * 躲藏者游泳死亡
  */
@@ -524,8 +554,6 @@ Interceptor.attach(UDH_HumanMovementComponent_SetMovementMode_addr, {
  * 暴风雪躲藏者胜利
  */
 var ADH_GameState_OnNewDayStarted_addr = base.add(0xda1680);
-//没作用
-var ADH_GameMode_ShipHasArrived = new NativeFunction(base.add(0xdaa600), 'void', ['pointer'], 'win64');
 Interceptor.attach(ADH_GameState_OnNewDayStarted_addr, {
     onEnter: function (args) {
         this.ADH_GameState = args[0];
@@ -546,8 +574,8 @@ Interceptor.attach(ADH_GameState_OnNewDayStarted_addr, {
             /* 暴风雪前一天取消好人无敌 */
             var ExplorerArray = getExplorerPlayerStates(ADH_GameState);
             for(var i = 0; i < ExplorerArray.length; i++){ 
-                var PlayerState = ExplorerArray[i];
-                var ADH_PlayerController = PlayerState.add(0xE0).readPointer();
+                var ADH_PlayerState = ExplorerArray[i];
+                var ADH_PlayerController = ADH_PlayerState.add(0xE0).readPointer();
                 var ADH_HumanCharacter = ADH_PlayerController.add(0x588).readPointer();
                 ADH_HumanCharacter.add(0x11D0).writeU8(0);
             }
@@ -562,7 +590,7 @@ Interceptor.attach(ADH_GameState_OnNewDayStarted_addr, {
 })
 
 /**
- * 被夹中增加体型
+ * 无法实现xxx被夹中增加体型
  */
 var ADH_Character_SnareExpired_addr = base.add(0xd72110);
 Interceptor.attach(ADH_Character_SnareExpired_addr, {
@@ -573,5 +601,208 @@ Interceptor.attach(ADH_Character_SnareExpired_addr, {
         var ADH_HumanCharacter = this.ADH_HumanCharacter;
         //TODO:踩中夹子执行某效果
 
+    }
+})
+
+
+/**
+ * 奖励机制
+ */
+const PlayerMatchStatType = {
+    // 未定义或无效的统计类型
+    PMS_UNDEFINED: 0x0,
+
+    // --- 击杀类 (Kills) ---
+    PMS_KILLS_START: 0x1,           // 击杀类型起始标记
+    PMS_KILL_PLAYER_SELF: 0x2,      // 击杀自己（自杀）
+    PMS_KILL_PLAYER_ENEMY: 0x3,     // 击杀敌方玩家
+    PMS_KILL_PLAYER_ALLY: 0x4,      // 击杀友方玩家
+    PMS_KILL_WOLF: 0x5,             // 击杀狼
+    PMS_KILL_RABBIT: 0x6,           // 击杀兔子
+    PMS_KILL_BEAR: 0x7,             // 击杀熊
+    PMS_KILL_SEAL: 0x8,             // 击杀海豹
+    PMS_KILL_CANNIBAL: 0x9,         // 击杀食人族
+    PMS_KILLS_END: 0xA,             // 击杀类型结束标记
+
+    // --- 倒下与复活类 (Downs & Revives) ---
+    PMS_DOWN_SELF: 0xB,             // 玩家自己被击倒
+    PMS_DOWN_ALLY: 0xC,             // 友方玩家被击倒
+    PMS_DOWN_ENEMY: 0xD,            // 敌方玩家被击倒
+    PMS_REVIVE_SELF: 0xE,           // 玩家自己被复活
+    PMS_REVIVE_ALLY: 0xF,           // 复活友方玩家
+    PMS_REVIVE_ENEMY: 0x10,         // 复活敌方玩家
+
+    // --- 治疗与状态影响类 (Healing & Status Effects) ---
+    PMS_HEAL_SELF: 0x11,            // 治疗自己
+    PMS_HEAL_ALLY: 0x12,            // 治疗友方
+    PMS_HEAL_ENEMY: 0x13,           // 治疗敌方
+    PMS_FEED_SELF: 0x14,            // 喂食自己（恢复饥饿/体力）
+    PMS_FEED_ALLY: 0x15,            // 喂食友方
+    PMS_FEED_ENEMY: 0x16,           // 喂食敌方
+    PMS_POISON_SELF: 0x17,          // 自己中毒
+    PMS_POISON_ALLY: 0x18,          // 友方中毒
+    PMS_POISON_ENEMY: 0x19,         // 敌方中毒
+    PMS_CURE_SELF: 0x1A,            // 自己被解毒
+    PMS_CURE_ALLY: 0x1B,            // 友方被解毒
+    PMS_CURE_ENEMY: 0x1C,           // 敌方被解毒
+    PMS_WARM_SELF: 0x1D,            // 自己取暖成功
+    PMS_WARM_ALLY: 0x1E,            // 为友方取暖
+    PMS_WARM_ENEMY: 0x1F,           // 为敌方取暖
+
+    // --- 越狱、逃脱与伤害类 (Jailbreak, Escape & Damage) ---
+    PMS_JAILBREAK_ALLY: 0x20,       // 帮助友方越狱
+    PMS_JAILBREAK_ENEMY: 0x21,      // 帮助敌方越狱
+    PMS_DAMAGE_ALLY: 0x22,          // 对友方造成伤害
+    PMS_DAMAGE_ENEMY: 0x23,         // 对敌方造成伤害
+    PMS_DAMAGE_BEAR: 0x24,          // 对熊造成伤害
+    PMS_STAYING_ALIVE: 0x25,        // 生存时间/存活状态（可能作为基础得分）
+    PMS_EMBEDDED: 0x26,             // 进入“嵌入”状态（具体机制需结合游戏）
+    PMS_ALLY_ESCAPED: 0x27,         // 友方成功逃脱
+    PMS_ENEMY_ESCAPED: 0x28,        // 敌方成功逃脱
+
+    // --- 制作与资源类 (Crafting & Resources) ---
+    PMS_CRAFT_STEW: 0x29,           // 制作炖菜
+    PMS_CRAFT_PISTOL: 0x2A,         // 制作手枪
+    PMS_CRAFT_MUSKET: 0x2B,         // 制作火枪
+    PMS_CRAFT_WOODAXE: 0x2C,        // 制作木斧
+    PMS_CRAFT_ICEAXE: 0x2D,         // 制作冰斧
+    PMS_CRAFT_SYRINGE: 0x2E,        // 制作注射器
+    PMS_COAL_DESTROYED: 0x2F,       // 破坏煤炭资源
+    PMS_NITRO_CARRY: 0x30,          // 携带硝化甘油
+    PMS_NITRO_CARRY_ASSIST: 0x31,   // 协助携带硝化甘油
+    PMS_NITRO_DESTROY: 0x32,        // 成功破坏硝化甘油
+    PMS_ICEBERG_DAMAGE: 0x33,       // 对冰山造成伤害
+    PMS_SMALL_ICEBERG_DESTROYED: 0x34, // 摧毁小型冰山
+    PMS_LARGE_ICEBERG_DESTROYED: 0x35, // 摧毁大型冰山
+
+    // --- 胜利与战舰操作类 (Win & Warship) ---
+    PMS_WIN_MATCH: 0x36,            // 赢得本场对局
+    PMS_BOILER_FUEL: 0x37,          // 为战舰锅炉添加燃料
+    PMS_BOILER_SABOTAGE: 0x38,      // 破坏战舰锅炉
+    PMS_SHIP_BADPARK: 0x39,         // 战舰停靠不当（可能扣分）
+    PMS_SHIP_MOVEUP: 0x3A,          // 战舰向前移动
+    PMS_SHIP_MOVEBACK: 0x3B,        // 战舰向后移动
+    PMS_SHIP_SLOWDRIVE: 0x3C,       // 战舰缓慢驾驶（可能为安全驾驶）
+    PMS_SHIP_REPAIR: 0x3D,          // 修理战舰
+    PMS_SHIP_DAMAGE: 0x3E,          // 战舰受到伤害
+    PMS_SHIP_SINK: 0x3F,            // 战舰沉没
+
+    // --- 其他行为类 (Other Actions) ---
+    PMS_STOLE_FOOD: 0x40,           // 偷窃食物
+    PMS_TOTEM_BUILT: 0x41,          // 建造图腾
+    PMS_TOTEM_DESTROYED: 0x42,      // 图腾被摧毁
+    PMS_BONECHARM_DESTROYED: 0x43,  // 骨制护身符被摧毁
+    PMS_SPELL_WHITEOUT: 0x44,       // 施放“白雾”法术
+    PMS_SPELL_CANNIBALS: 0x45,      // 施放“食人族”法术
+    PMS_SPELL_SPIRITWALK: 0x46,     // 施放“灵行”法术
+    PMS_SPELL_GALE: 0x47,           // 施放“狂风”法术
+    PMS_STOWAWAY: 0x48,             // 成为偷渡者（特殊角色/行为）
+    PMS_POKER_WINS: 0x49,           // 在扑克游戏中获胜
+    PMS_CHEATER: 0x4A,              // 被检测到作弊行为
+    PMS_SPELL_HYSTERIA: 0x4B,       // 施放“狂乱”法术
+    PMS_SPELL_DOPPELGANGER: 0x4C,   // 施放“分身”法术
+    PMS_SPELL_BLOODMOON: 0x4D,      // 施放“血月”法术
+    PMS_SPELL_HUSH: 0x4E,           // 施放“寂静”法术
+    PMS_BOILER_BOOST: 0x4F,         // 为战舰锅炉提供增益效果
+    PMS_KILL_RAT: 0x50,             // 击杀老鼠
+
+    PMS_MAX: 0x51 // 0x51 是所有有效值之后的下一个值，常用于数组边界检查
+};
+
+function giveTaskAwardInventory(PlayerState, TaskAwardInventory) {
+    //logInfo('InitExplorerInventory');
+    var DesiredInventory = TaskAwardInventorys.get(TaskAwardInventory);
+    if (DesiredInventory.length == 0) {
+        return;
+    }
+    for (var i = 0; i < DesiredInventory.length; i++) { 
+        var InventoryInfo = DesiredInventory[i];
+        var ClassId = InventoryInfo[0];
+        var Count = InventoryInfo[1];
+        var Clazz = RegisterItemClass.get(ClassId);
+        //logInfo('InitExplorerInventory ' + ClassId + ' ' + Count+ ' ' + Clazz);
+        for(var j = 0; j < Count; j++){
+            giveInventory(PlayerState, Clazz);
+        }
+    }
+
+}
+
+//奖励列表
+var TaskAwardInventorys = new Map([
+    ['TOTEM_BUILT', [//制造图腾
+        [24,1],
+    ]],
+    ['TOTEM_DESTROYED', [//摧毁图腾
+        [24,1],
+    ]]
+    ,
+    ['Explorer_KILL_PLAYER_ENEMY', [//探险家击杀敌方
+        [24,1],
+    ]]
+]);
+
+var ADH_PlayerState_ModifyMatchStat_addr = base.add(0xe42820);
+var FindByKey = new NativeFunction(base.add(0xe25f50), 'pointer', ['pointer', 'pointer'], 'win64');
+Interceptor.attach(ADH_PlayerState_ModifyMatchStat_addr, {
+    onEnter: function (args) {
+        this.ADH_PlayerState = args[0];
+        this.Stat = args[1];
+        
+    },onLeave : function (ret) { 
+        try{
+            var ADH_PlayerState = this.ADH_PlayerState;
+            //logInfo('ADH_PlayerState :' + ADH_PlayerState);
+            var Stat = this.Stat;
+            var statValue = Stat.toInt32();
+            var statPtr = Memory.alloc(1);
+            statPtr.writeS8(statValue & 0xFF);
+            //logInfo('Stat = '+Stat + ' ' + statPtr);
+            var MatchStats = ADH_PlayerState.add(0x330);
+            //logInfo('MatchStats = '+MatchStats);
+            var FPlayerMatchStat = FindByKey(MatchStats, statPtr);
+            //logInfo('FPlayerMatchStat = '+FPlayerMatchStat);
+            var ScoreTotal = FPlayerMatchStat.add(0x8).readFloat();
+            var Count = FPlayerMatchStat.add(0x4).readU32();
+            var IsThrall = ADH_PlayerState.add(0x572).readU8();
+            var ADH_PlayerController = ADH_PlayerState.add(0xE0).readPointer();
+            var ADH_HumanCharacter = ADH_PlayerController.add(0x588).readPointer();
+            //logInfo(' ScoreTotal ' + ScoreTotal + ' Count ' + Count);
+            //区分好人狼人奖励类型
+            if(IsThrall){
+                if(Stat == PlayerMatchStatType.PMS_TOTEM_BUILT){//建造图腾
+                    if(Count == 10){ 
+                        //奖励物资
+                        giveTaskAwardInventory(ADH_PlayerState, 'TOTEM_BUILT');
+                    }else if(Count == 20){
+                        //奖励连跳
+                        var JumpMaxCount = ADH_HumanCharacter.add(0x344).readU32();
+                        JumpMaxCount++;
+                        ADH_HumanCharacter.add(0x344).writeU32(JumpMaxCount);
+                    }else if(Count == 30){
+                        //奖励最大生命值
+                        var MaximumHealth = ADH_HumanCharacter.add(0x7E0).readFloat();
+                        MaximumHealth = MaximumHealth + 20;
+                        ADH_HumanCharacter.add(0x7E0).writeU32(MaximumHealth);
+                    }
+                }
+            }else{
+                if(Stat == PlayerMatchStatType.PMS_TOTEM_DESTROYED){//摧毁图腾
+                    if(Count%20 == 0){ 
+                        //奖励物资
+                        giveTaskAwardInventory(ADH_PlayerState, 'TOTEM_DESTROYED');
+                    }
+                }else if(Stat == PlayerMatchStatType.PMS_KILL_PLAYER_ENEMY){//击杀敌方
+                    if(Count%3 == 0){ 
+                        //奖励物资
+                        giveTaskAwardInventory(ADH_PlayerState, 'Explorer_KILL_PLAYER_ENEMY');
+                    }
+                }
+        }
+        }catch(e){
+            logInfo('ADH_PlayerState_ModifyMatchStat_addr ' + e);
+
+        }
+        
     }
 })

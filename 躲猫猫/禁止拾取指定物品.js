@@ -116,7 +116,7 @@ Interceptor.attach(ADH_Inventory_Use_Implementation_addr, {
                 if(IsThrall){
                     ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 2);
                 }else{
-                    ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 8);
+                    ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 6);
                 }
                 
             }

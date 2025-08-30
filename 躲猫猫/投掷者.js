@@ -55,7 +55,8 @@ function getObjectName(UObject) {
 */
 
 var autoRegressionInventorys = [
-    '/Game/Blueprints/Inventory/Sword/BP_Sword_Inventory.BP_Sword_Inventory_C'//军刀
+    '/Game/Blueprints/Inventory/Sword/BP_Sword_Inventory.BP_Sword_Inventory_C',//军刀
+    '/Game/Blueprints/Inventory/WoodAxe/BP_WoodAxe_Inventory.BP_WoodAxe_Inventory_C'
 ];
 var ADH_InventoryPickup_OnPickupMovementStopped_addr = base.add(0xDD77C0)
 Interceptor.attach(ADH_InventoryPickup_OnPickupMovementStopped_addr, {
@@ -77,6 +78,7 @@ Interceptor.attach(ADH_InventoryPickup_OnPickupMovementStopped_addr, {
                     continue;
                 }
                 if(UClass.equals(InventoryClass)){
+                    
                     ADH_InventoryPickup_PickUp(ADH_InventoryPickup, ADH_PlayerController, 0);
                 }
             }

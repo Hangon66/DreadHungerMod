@@ -1,4 +1,3 @@
-//东方转windows
 var base = Module.findBaseAddress('DreadHungerServer-Win64-Shipping.exe');
 
 var ADH_GameMode_SpawnDefaultPawnAtTransform_Implementation =  base.add(0xDAB090)
