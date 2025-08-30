@@ -6,14 +6,14 @@ function logInfo(Info) {
     f.close();
 }
 var DamageTable = [  // 伤害表
-    ['/Game/Blueprints/Inventory/Flintlock/BP_Flintlock_Inventory.BP_Flintlock_Inventory_C', 52,5], // 燧发枪
-    ['/Game/Blueprints/Inventory/WoodAxe/BP_WoodAxe_Inventory.BP_WoodAxe_Inventory_C', 16,5],  // 斧头
+    ['/Game/Blueprints/Inventory/Flintlock/BP_Flintlock_Inventory.BP_Flintlock_Inventory_C', 30,5], // 燧发枪
+    ['/Game/Blueprints/Inventory/WoodAxe/BP_WoodAxe_Inventory.BP_WoodAxe_Inventory_C', 0,5],  // 斧头
     ['/Game/Blueprints/Inventory/Bow/BP_Bow_Inventory.BP_Bow_Inventory_C', 100,5], // 弓
-    ['/Game/Blueprints/Inventory/Musket/BP_Musket_Inventory.BP_Musket_Inventory_C', 1,5],  // 滑膛枪
+    ['/Game/Blueprints/Inventory/Musket/BP_Musket_Inventory.BP_Musket_Inventory_C', 30,5],  // 滑膛枪
     ['/Game/Blueprints/Inventory/IceAxe/BP_IceAxe_Inventory.BP_IceAxe_Inventory_C', 0,5],  // 冰镐
     ['/Game/Blueprints/Inventory/Shovel/BP_Shovel_Inventory.BP_Shovel_Inventory_C', 0,5],  // 铲子
     ['/Game/Blueprints/Inventory/Cleaver/BP_Cleaver_Inventory.BP_Cleaver_Inventory_C', 0,5], //菜刀
-    ['/Game/Blueprints/Inventory/Sword/BP_Sword_Inventory.BP_Sword_Inventory_C', 50,5], //军刀
+    ['/Game/Blueprints/Inventory/Sword/BP_Sword_Inventory.BP_Sword_Inventory_C', 52,5], //军刀
     ['/Game/Blueprints/Inventory/Totem/BP_BoneDagger_Inventory.BP_BoneDagger_Inventory_C', 0,5], // 骨匕首
     ['/Game/Blueprints/Inventory/Fists/BP_Fists_Inventory.BP_Fists_Inventory_C', 7,5], //拳头
     ['/Game/Blueprints/Inventory/BearTrap/BP_BearTrap_Inventory.BP_BearTrap_Inventory_C', 30,5], //夹子

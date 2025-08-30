@@ -95,7 +95,7 @@ Interceptor.attach(UDH_InventoryManager_AddInventory_addr, {
 });
 
 var SpecialInventory1 = [
-    '/Game/Blueprints/Inventory/Syringe/BP_Inventory_Laudanum.BP_Inventory_Laudanum_C'
+    '/Game/Blueprints/Inventory/Syringe/BP_Inventory_Laudanum.BP_Inventory_Laudanum_C',
 ];
 
 Interceptor.attach(ADH_Inventory_Use_Implementation_addr, {

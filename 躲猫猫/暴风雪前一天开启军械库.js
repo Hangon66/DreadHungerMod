@@ -11,9 +11,13 @@ Interceptor.attach(ADH_ArmoryDoor_Tick_addr, {
         var ArmoryLockComponent = this.ArmoryLockComponent;
         var World = UObject_GetWorld(ArmoryLockComponent);
         var GameState = World.add(0x120).readPointer();
+        var DaysUntilBlizzard = GameState.add(0x484).readU32();
         if(GameState.isNull()) {
             return;
         }
-        this.context.rax = 1;
+        if(DaysUntilBlizzard == 1){
+            this.context.rax = 1;
+        }
+        
     }
 });

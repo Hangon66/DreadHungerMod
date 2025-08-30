@@ -1,6 +1,3 @@
-xxxx
-var base = Module.findBaseAddress('DreadHungerServer-Win64-Shipping.exe');
-
 //若启用无限物品丢弃该变量为1，关闭为0
 var flag_end = 1;
 

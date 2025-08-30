@@ -1,6 +1,6 @@
 
 var base = Module.findBaseAddress("DreadHungerServer-Win64-Shipping.exe");
-var SpellSelection = [[4, 2], [2, 2]];
+var SpellSelection = [[4, 2], [2, 2], [2, 2], [2, 2]];
 var Max = 0;
 
 for(var i = 0; i < SpellSelection.length; i++)
@@ -11,12 +11,12 @@ for(var i = 0; i < SpellSelection.length; i++)
 }
 /*
 
-SpellSelection´ú±íÑ¡¶¨¼¼ÄÜ
-0: ¹í
-1: Îí
-2: ·ÖÉí
-3: Áé½ç
-4: ³ÁÄ¬
+SpellSelectionä»£è¡¨é€‰å®šæŠ€èƒ½
+0: é¬¼
+1: é›¾
+2: åˆ†èº«
+3: çµç•Œ
+4: æ²‰é»˜
 
 */
 

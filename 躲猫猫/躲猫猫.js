@@ -5,6 +5,8 @@ function logInfo(Info) {
 }
 
 var base = Module.findBaseAddress('DreadHungerServer-Win64-Shipping.exe');
+var ADH_HumanCharacter_Died_addr = base.add(0xd50cb0);
+var ADH_HumanCharacter_Died = new NativeFunction(base.add(0xd50cb0), 'void', ['pointer', 'pointer', 'pointer', 'float'], 'win64');
 var ADH_PlayerState_SetIsDead_addr = base.add(0xE4E700);
 var ADH_PlayerState_SetIsDead = new NativeFunction(base.add(0xE4E700), 'void', ['pointer', 'int8'], 'win64');
 var UClass_GetPrivateStaticClass = new NativeFunction(base.add(0x11F02E0), 'pointer', [], 'win64');
@@ -125,18 +127,16 @@ function sendRemainingTotalLife() {
     SendBroadMessage(GameState, Message);
 }
 
-Interceptor.attach(ADH_PlayerState_SetIsDead_addr, {
+Interceptor.attach(ADH_HumanCharacter_Died_addr, {
     onEnter : function(args) {
-        this.PlayerState = args[0];
-        this.bIsDead = args[1];
+        this.ADH_HumanCharacter = args[0];
+        var ADH_HumanCharacter = args[0];
+        var ADH_PlayerState = ADH_HumanCharacter.add(0x240).readPointer();
+        this.IsThrall = ADH_PlayerState.add(0x572).readU8(); 
     },onLeave : function(retval) {
         try{
-            var PlayerState = this.PlayerState;
-            var bIsDead = this.bIsDead;
-            if(!bIsDead) {
-                return;
-            }
-            var IsThrall = PlayerState.add(0x572).readU8(); 
+            var ADH_HumanCharacter = this.ADH_HumanCharacter;
+            var IsThrall = this.IsThrall;
             if(IsThrall){
                 sendRemainingTotalLife();
             }else{
@@ -144,10 +144,10 @@ Interceptor.attach(ADH_PlayerState_SetIsDead_addr, {
                 var ADH_GameMode = ADH_GameState.add(0x228).readPointer();
                 getRemainingTotalLife(ADH_GameState);
                 if(ExplorerRemainingLife <= 0){
-                    SendBroadMessage(ADH_GameState, "抓捕者全部死亡");
+                    SendBroadMessage(ADH_GameState, "你们打倒了抓捕者,躲藏者胜利");
                     var timer = setTimeout(function(){
                         ADH_GameMode_WarshipEscaped(ADH_GameMode, 1);
-                    },3000);
+                    },8000);
                 }
             }
         }catch(e){
@@ -175,16 +175,16 @@ var roleNames = {
     8: "医生"
 }
 
-var roles = [3];
-// /* 加入躲藏者 */
-// for(var i = 0; i < MaxPlayers - MaxExplorer; i++) {
-//     roles.push(ThrallsRole);
-// }
+var roles = [];
+ /* 加入躲藏者 */
+ for(var i = 0; i < MaxPlayers - MaxExplorer; i++) {
+     roles.push(ThrallsRole);
+ }
 
 // /* 加入抓捕者 */
-// for(var i = 0; i < MaxExplorer; i++) {
-//     roles.push(ExplorerRole);
-// }
+ for(var i = 0; i < MaxExplorer; i++) {
+     roles.push(ExplorerRole);
+ }
 
 
 function getRolePlayerStates(GameState, role) {
@@ -216,21 +216,10 @@ function getExplorerPlayerStates(GameState) {
     return ShuffleArray;
 }
 
-function getExplorerPlayerStates(GameState) {
-    var PlayerArray = GameState.add(0x238);
-    var ShuffleArray = [];
-    for(var i = 0; i < getArraySize(PlayerArray); i++) {
-        var PlayerState = getArrayItemAddr(PlayerArray, 8, i).readPointer();
-        // var SelectedRole = PlayerState.add(0x590).readPointer();
-        // var number = SelectedRole.add(0x58).readU8(); 
-        var IsThrall = PlayerState.add(0x572).readU8();
-		if(!IsThrall){
-            ShuffleArray.push(PlayerState);    
-		}
-    }
-    return ShuffleArray;
-}
 
+/**
+ * 随机角色
+ */
 var ADH_PlayerState_SetPlayerRole = base.add(0xE4F390);
 var UDH_PlayerRoleData_FindByType = new NativeFunction(base.add(0xE33300), "size_t", ["char", "pointer"], 'win64');
 var ADH_PlayerState_SetPlayerRole_Interceptor = Interceptor.attach(ADH_PlayerState_SetPlayerRole, {
@@ -244,6 +233,12 @@ var ADH_PlayerState_SetPlayerRole_Interceptor = Interceptor.attach(ADH_PlayerSta
 	}
 });
 
+var UDH_GameplayStatics_IsRoleTaken = base.add(0xe93a70)
+var UDH_GameplayStatics_IsRoleTaken_Interceptor = Interceptor.attach(UDH_GameplayStatics_IsRoleTaken,{
+    onLeave : function (retval) {
+        retval.replace(0)
+    }
+});
 
 var ADH_PlayerState_SetIsThrall = new NativeFunction(base.add(0xE4E880), 'void', ['pointer', 'int8'], 'win64');
 
@@ -328,7 +323,7 @@ Interceptor.attach(ADH_BrigCell_AddPrisoner, {
         var ADH_HumanCharacter = ADH_PlayerController.add(0x588).readPointer();
         //var ADH_BrigDoor = ADH_BrigCell.add(0x300).readPointer();
         try{
-            setActorRelativeScale3D(ADH_HumanCharacter, 0.4, 0.4, 0.4);
+            setActorRelativeScale3D(ADH_HumanCharacter, 0.3, 0.3, 0.3);
         }catch(e){
             logInfo(e);
         }
@@ -361,10 +356,9 @@ Interceptor.attach(ADH_BrigCell_AddPrisoner, {
 /**
  * 抓捕者开局死亡
  */
-var DeathUnpossessDelay = 0;   //抓捕者复活延迟
+var DeathUnpossessDelay = 20;   //抓捕者复活延迟
 var ADH_HumanCharacter_AddStartingInventory_addr = base.add(0xd46f10);
 var ADH_GameMode_FinishRestartPlayer_addr = base.add(0xd8fcf0);
-var ADH_HumanCharacter_Died = new NativeFunction(base.add(0xd50cb0), 'void', ['pointer', 'pointer', 'pointer', 'float'], 'win64');
 var ADH_HumanCharacter_AddStartingInventory = new NativeFunction(base.add(0xd46f10), 'void', ['pointer', 'pointer'], 'win64');
 var UDH_InventoryManager_AddInventory = new NativeFunction(base.add(0xDBC040), 'void', ['pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'int8', 'pointer'], 'win64');
 function InitItemState(State) {
@@ -522,6 +516,7 @@ Interceptor.attach(UDH_HumanMovementComponent_SetMovementMode_addr, {
  * 暴风雪躲藏者胜利
  */
 var ADH_GameState_OnNewDayStarted_addr = base.add(0xda1680);
+//没作用
 var ADH_GameMode_ShipHasArrived = new NativeFunction(base.add(0xdaa600), 'void', ['pointer'], 'win64');
 Interceptor.attach(ADH_GameState_OnNewDayStarted_addr, {
     onEnter: function (args) {
@@ -530,14 +525,16 @@ Interceptor.attach(ADH_GameState_OnNewDayStarted_addr, {
     },onLeave : function (ret) { 
         var ADH_GameState = this.ADH_GameState;
         var ADH_GameMode = ADH_GameState.add(0x228).readPointer();
-        var BlizzardStarted = ADH_GameState.add(0x359).readU8();
-        if(BlizzardStarted <= 0){
-            SendBroadMessage(ADH_GameState, "躲藏者胜利");
+        var bBlizzardStarted = ADH_GameState.add(0x359).readU8();
+        var DaysUntilBlizzard = ADH_GameState.add(0x484).readU32();
+        //logInfo("DaysUntilBlizzard:"+DaysUntilBlizzard);
+        if(bBlizzardStarted == 1){
+            SendBroadMessage(ADH_GameState, "暴风雪已至,躲藏者胜利");
             var timer = setTimeout(function(){
-                ADH_GameMode_ShipHasArrived(ADH_GameMode);
-            },1000);
+                ADH_GameMode_WarshipEscaped(ADH_GameMode, 0);
+            },3000);
             
-        }else if(BlizzardStarted == 1){ 
+        }else if(DaysUntilBlizzard == 1){ 
             /* 暴风雪前一天取消好人无敌 */
             var ExplorerArray = getExplorerPlayerStates(ADH_GameState);
             for(var i = 0; i < ExplorerArray.length; i++){ 
@@ -547,7 +544,7 @@ Interceptor.attach(ADH_GameState_OnNewDayStarted_addr, {
                 ADH_HumanCharacter.add(0x11D0).writeU8(0);
             }
             var timer = setTimeout(function(){
-                SendBroadMessage(ADH_GameState, "反抗时刻,拿起武器反抗抓捕者");
+                SendBroadMessage(ADH_GameState, "反抗时刻,拿起你们的武器");
             },3000);
 
 
@@ -566,7 +563,7 @@ Interceptor.attach(ADH_Character_SnareExpired_addr, {
         
     },onLeave : function (ret) { 
         var ADH_HumanCharacter = this.ADH_HumanCharacter;
-        //踩中夹子执行某效果
+        //TODO:踩中夹子执行某效果
 
     }
 })
