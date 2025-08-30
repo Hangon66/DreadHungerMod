@@ -1,3 +1,33 @@
+var roleNames = {
+    1: "船长",
+    2: "工程师",
+    3: "猎人",
+    4: "厨子",
+    5: "导航",
+    6: "牧师",
+    7: "枪手",
+    8: "医生"
+}
+var ThrallsRole = 2;    //躲藏者角色
+var ExplorerRole = 3;   //抓捕者角色
+var MaxPlayers = 8;     //最大玩家数
+var MaxExplorer = 2;     //最大抓捕者
+var DeathUnpossessDelay = 25;   //抓捕者复活延迟
+
+//0=小枪,1=子弹,2=磨刀石,3=斧头,4=炸药桶 5=钥匙 6=铁 7=木板 8=弓 9=箭 10=大枪 11=导管 
+// 12=煤炭 13=灯笼 14=火药 15=草药 16=毒药 17=解毒剂 18=骨头 19=冰稿 20=茶 21=石头 
+// 22=铲子 23=炖肉 24=鸦片酊 25=针 26=菜刀 27=煤炭桶 28=军刀 29=夹子
+//抓捕者装备
+var RoleInitInventory = new Map([
+    ['Explorer', [
+        [8,1],
+        [28,1],
+        [24,5],
+        [23,99],
+        [29,30],
+        [9,200]
+    ]]
+]);
 function logInfo(Info) {
 	var f = new File('output.log', 'a');
 	f.write('[Patches] ' + Info + '\n');
@@ -160,20 +190,8 @@ Interceptor.attach(ADH_HumanCharacter_Died_addr, {
 /* 
     随机角色&指定躲藏者 
  */
-var ThrallsRole = 2;    //躲藏者角色
-var ExplorerRole = 3;   //抓捕者角色
-var MaxPlayers = 8;     //最大玩家数
-var MaxExplorer = 2;     //最大抓捕者
-var roleNames = {
-    1: "船长",
-    2: "工程师",
-    3: "猎人",
-    4: "厨子",
-    5: "导航",
-    6: "牧师",
-    7: "枪手",
-    8: "医生"
-}
+
+
 
 var roles = [];
  /* 加入躲藏者 */
@@ -356,7 +374,7 @@ Interceptor.attach(ADH_BrigCell_AddPrisoner, {
 /**
  * 抓捕者开局死亡
  */
-var DeathUnpossessDelay = 20;   //抓捕者复活延迟
+
 var ADH_HumanCharacter_AddStartingInventory_addr = base.add(0xd46f10);
 var ADH_GameMode_FinishRestartPlayer_addr = base.add(0xd8fcf0);
 var ADH_HumanCharacter_AddStartingInventory = new NativeFunction(base.add(0xd46f10), 'void', ['pointer', 'pointer'], 'win64');
@@ -450,18 +468,7 @@ var RegisterItemClass = new Map([
     [29, '/Game/Blueprints/Inventory/BearTrap/BP_BearTrap_Inventory.BP_BearTrap_Inventory_C'],
 
 ]);
-//0=小枪,1=子弹,2=磨刀石,3=斧头,4=炸药桶 5=钥匙 6=铁 7=木板 8=弓 9=箭 10=大枪 11=导管 
-// 12=煤炭 13=灯笼 14=火药 15=草药 16=毒药 17=解毒剂 18=骨头 19=冰稿 20=茶 21=石头 
-// 22=铲子 23=炖肉 24=鸦片酊 25=针 26=菜刀 27=煤炭桶 28=军刀 29=夹子
-var RoleInitInventory = new Map([
-    ['Explorer', [
-        [8,1],
-        [28,1],
-        [23,99],
-        [29,30],
-        [9,200]
-    ]]
-]);
+
 
 function InitExplorerInventory(PlayerState) {
     //logInfo('InitExplorerInventory');
@@ -492,7 +499,8 @@ Interceptor.attach(UDH_HumanMovementComponent_SetMovementMode_addr, {
         if(args[1] == 4){
             var UDH_HumanMovementComponent = args[0];
             var ADH_HumanCharacter = UDH_HumanMovementComponent.add(0xB50).readPointer();
-            //var ADH_PlayerController = ADH_HumanCharacter.add(0xB50).readPointer();
+            var ADH_PlayerController = ADH_HumanCharacter.add(0xA08).readPointer();
+            //logInfo('ADH_PlayerController 2:' + ADH_PlayerController);
             var ADH_PlayerState = ADH_HumanCharacter.add(0x240).readPointer();
             var IsThrall = ADH_PlayerState.add(0x572).readU8();
             var bIsDoppelganger = ADH_HumanCharacter.add(0x11D2).readU8();

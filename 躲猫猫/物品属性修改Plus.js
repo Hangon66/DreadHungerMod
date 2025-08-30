@@ -41,6 +41,8 @@ function getObjectFullName(UObject) {
 /*修改每个物品下方的MaxStackCount和DurabilityUses后面的数字即可
 MaxStackCount=最大叠加数
 DurabilityUses=耐久值
+Damage=武器伤害
+UpgradeBonusDamage=磨刀石额外伤害
 */
 var InventoryTable = {
     '/Game/Blueprints/Inventory/Flintlock/BP_Flintlock_Inventory.BP_Flintlock_Inventory_C' : {      //小枪
@@ -49,17 +51,24 @@ var InventoryTable = {
     },
     '/Game/Blueprints/Inventory/Musket/BP_Musket_Inventory.BP_Musket_Inventory_C' : {      //大枪
         'MaxStackCount' : 1,
-		'DurabilityUses' : 999
+		'DurabilityUses' : 999,
+        'Damage' : 30
     },
 	'/Game/Blueprints/Inventory/Sword/BP_Sword_Inventory.BP_Sword_Inventory_C' : {      //军刀
 		'MaxStackCount' : 1,
-		'DurabilityUses' : 999
+		'DurabilityUses' : 999,
+        'Damage' : 50,
+        'bHasDurability' : 0,
+        'ThrowCost' : 0,
+        'ThrowDelay' : 0
+
     },
 	'/Game/Blueprints/Inventory/Lantern/BP_Lantern_Inventory.BP_Lantern_Inventory_C' : {      //灯笼
         'MaxStackCount' : 1,
     },
     '/Game/Blueprints/Inventory/Bow/BP_Bow_Inventory.BP_Bow_Inventory_C' : {      //弓
-        'MaxStackCount' : 1
+        'MaxStackCount' : 1,
+        'Damage' : 100,
     },
     '/Game/Blueprints/Inventory/Flint/BP_GunParts_Inventory.BP_GunParts_Inventory_C' : {      //枪械零件
         'MaxStackCount' : 1
@@ -178,8 +187,24 @@ var InventoryTable = {
 };
 
 var PropertyOffsets = {
-    'MaxStackCount' : ['int32', 0x814],
-	'DurabilityUses' : ['int32', 0x44c],
+    'MaxStackCount' : ['int32', 0x814],//最大堆叠
+	'DurabilityUses' : ['int32', 0x44c],//耐久
+    'Damage' : ['float', 0x868],//武器伤害
+    'UpgradeBonusDamage' : ['float', 0x84C],//磨刀石增加伤害
+    'AimEntryTime' : ['float', 0x2C4],//进入瞄准耗时
+    'AimExitTime' : ['float', 0x2C8],//离开瞄准耗时
+    'bHasDurability' : ['int8', 0x441],//是否存在耐久
+    'bDestroyOnZeroDurability' : ['int8', 0x442],//耐久度归零时是否自动销毁物品
+    'bAlwaysDamageWhenDropped' : ['int8', 0x444],//丢弃物品时是否必定造成耐久度损伤
+    'bDamageWhenUsed' : ['int8', 0x445],//是否消耗耐久
+    'DefaultDurability' : ['float', 0x448],//默认最大耐久度值
+    'UseCooldown' : ['float', 0x520],//使用冷却
+    'bCanBeDropped' : ['int8', 0x690],//是否可以被主动丢弃
+    'bObliterateWithCarrier' : ['int8', 0x691],//拥有者死亡则物品消失
+    'ThrowCost' : ['float', 0x774],//投掷体力消耗
+    'ThrowDelay' : ['float', 0x778],//投掷延迟
+    'bCanBeTransferred' : ['int8', 0x811],//物品是否可以在玩家之间转移
+    'FuelValue' : ['float', 0x8AC],//作为燃料时提供的能量值
 };
 function processProperty(PropTable, Data, TargetObject) {
     for(var PropertyName in Data) {

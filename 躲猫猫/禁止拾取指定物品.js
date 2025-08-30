@@ -58,7 +58,7 @@ Interceptor.attach(UDH_InventoryManager_AddInventory_addr, {
         var ADH_HumanCharacter = UDH_InventoryManager.add(0xD8).readPointer();
         var ADH_PlayerState = ADH_HumanCharacter.add(0x240).readPointer();
         var IsThrall = ADH_PlayerState.add(0x572).readU8();
-        var TargetItem = args[1]; 
+        var UClass = args[1]; 
         if(!flag1){
             for(var i = 0; i < ProhibitedClassThrall.length; i++){
                 var Clazz = findClassByName(ProhibitedClassThrall[i]);
@@ -79,13 +79,13 @@ Interceptor.attach(UDH_InventoryManager_AddInventory_addr, {
         }
         if(IsThrall){
             for(var i = 0; i < ThrallClazzs.length; i++){
-                if(TargetItem.equals(ThrallClazzs[i])){
+                if(UClass.equals(ThrallClazzs[i])){
                     args[1] = ptr(0);
                 }
             }
         }else{
             for(var i = 0; i < ExplorerClazzs.length; i++){
-                if(TargetItem.equals(ExplorerClazzs[i])){
+                if(UClass.equals(ExplorerClazzs[i])){
                     args[1] = ptr(0);
                 }
             }
@@ -104,6 +104,8 @@ Interceptor.attach(ADH_Inventory_Use_Implementation_addr, {
     },onLeave : function (retval) { 
         var ADH_Inventory = this.ADH_Inventory;
         var ADH_HumanCharacter = ADH_Inventory.add(0x268).readPointer();
+        var ADH_PlayerState = ADH_HumanCharacter.add(0x240).readPointer();
+        var IsThrall = ADH_PlayerState.add(0x572).readU8();
         var TargetItem = ADH_Inventory.add(0x10).readPointer();
         for(var i = 0; i < SpecialInventory1.length; i++){
             var Clazz = findClassByName(SpecialInventory1[i]);
@@ -111,8 +113,14 @@ Interceptor.attach(ADH_Inventory_Use_Implementation_addr, {
                 continue;
             }
             if(TargetItem.equals(Clazz)){
-                ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 2);
+                if(IsThrall){
+                    ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 2);
+                }else{
+                    ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 8);
+                }
+                
             }
         }
+
     }
 });

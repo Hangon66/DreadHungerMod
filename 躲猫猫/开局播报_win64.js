@@ -24,9 +24,9 @@ function SendThrallMessage(PlayerController,Message,Usound){
 
 var MessageList = [
 "利用一切有用的东西进行躲避/抓捕", 
-"弓100,军刀50", 
+"弓100,军刀50,大枪30", 
 "好人无敌直到暴风雪前一天", 
-"开局20秒躲藏, 不能下水，坚持到暴风雪躲藏者胜利", 
+"开局25秒躲藏, 不能下水，坚持到暴风雪躲藏者胜利", 
 ]
 
 function SendMessages(PlayerController, MessageList) {
