@@ -867,3 +867,89 @@ var ADH_Warship = {
     'FloodDrainRate' : ['float', 0x0438], // float 洪水排出速率
     'TemperatureWhenFlooded' : ['float', 0x043C] // float 洪水涌入时的环境温度
 }
+
+
+
+// AAIController: AI控制器的基类，定义了所有AI共有的核心组件和功能
+var AAIController = {
+    // --- Gameplay资源与任务 ---
+    'ScriptClaimedResources' : ['FGameplayResourceSet', 0x02B8], // 脚本声明的游戏资源集
+
+    // --- AI状态与配置标志 (位域，位于0x2D0) ---
+    // bStartAILogicOnPossess : 1,           // 拥有Pawn时是否自动启动AI逻辑
+    // bStopAILogicOnUnposses : 1,           // 失去Pawn时是否停止AI逻辑
+    // bLOSflag : 1,                         // 视线(LOS)检查标志
+    // bSkipExtraLOSChecks : 1,              // 是否跳过额外的LOS检查
+    // bAllowStrafe : 1,                     // 是否允许横向移动
+    // bWantsPlayerState : 1,                // 是否需要PlayerState
+    // bSetControlRotationFromPawnOrientation : 1, // 控制器旋转是否跟随Pawn朝向
+
+    // --- 核心AI组件 ---
+    'PathFollowingComponent' : ['UPathFollowingComponent*', 0x02D8], // 路径跟随组件，负责导航和移动
+    'BrainComponent'         : ['UBrainComponent*',         0x02E0], // 大脑组件，通常关联行为树(Behavior Tree)
+    'PerceptionComponent'    : ['UAIPerceptionComponent*',  0x02E8], // 感知组件，管理视觉、听觉等感官
+    'ActionsComp'            : ['UPawnActionsComponent*',   0x02F0], // Pawn动作组件，管理动作序列
+    'Blackboard'             : ['UBlackboardComponent*',    0x02F8], // 黑板组件，AI的“记忆”，存储决策所需数据
+    'CachedGameplayTasksComponent' : ['UGameplayTasksComponent*', 0x0300], // 缓存的游戏任务组件
+
+    // --- 导航与任务配置 ---
+    'DefaultNavigationFilterClass' : ['TSubclassOf<UNavigationQueryFilter>', 0x0308], // 默认导航查询过滤器
+
+    // --- 委托与事件 ---
+    'ReceiveMoveCompleted' : ['FAIMoveCompletedSignature', 0x0310], // 移动完成事件委托
+
+    // --- 团队系统 ---
+    'TeamID' : ['FGenericTeamId', 0x0320] // 通用团队ID，用于敌我识别
+};
+
+// ADH_AIController: 游戏特化的AI控制器基类，继承自AAIController，增加了威胁系统和目标管理
+var ADH_AIController = Object.assign({}, AAIController, {
+    // --- 威胁与目标管理系统 ---
+    'ThreatTable' : ['TMap<AActor*, float>', 0x0328], // 威胁值表，映射玩家到其威胁值，用于目标选择
+    'TargetCharacter' : ['ADH_Character*', 0x0378],   // 当前选定的攻击目标
+    'ControlledCharacter' : ['ADH_Character*', 0x0380], // 受此控制器控制的角色 (与派生类的ControlledAnimal应指向同一对象)
+
+    // --- 更新与搜索参数 ---
+    'UpdateTargetRate' : ['float', 0x0388],           // 更新目标的频率(秒)
+    'MaxDamageAggroRange' : ['float', 0x038C],        // 因受到伤害而吸引仇恨的最大距离
+    'NoTargetUpdateTime' : ['float', 0x0390],         // 无目标时的状态更新间隔
+    'NewTargetSearchRange' : ['float', 0x03A8],       // 寻找新目标的搜索半径
+
+    // --- 行为配置标志 ---
+    'bMustHaveTarget' : ['bool', 0x03AC],             // AI是否必须拥有一个目标
+    'bChaseTargetCharacter' : ['bool', 0x03AD],       // 是否正在追逐当前目标
+    'bReactToDamage' : ['bool', 0x03AE],              // 是否对受到的伤害做出反应
+    'bFollowingPathSpline' : ['bool', 0x03AF],        // 是否正在沿预设路径曲线移动
+    'bWasInAttackRange' : ['bool', 0x03C8],           // 上一帧是否在攻击范围内
+    'bPaused' : ['bool', 0x03C9],                     // AI是否被暂停
+
+    // --- 导航与任务过滤器 ---
+    'ChaseFilter' : ['TSubclassOf<UNavigationQueryFilter>', 0x0398], // 追逐时使用的导航查询过滤器
+
+    // --- 定时器 ---
+    'UpdateTargetTimerHandle' : ['FTimerHandle', 0x03B0],         // 更新目标的定时器句柄
+    'RandomizeThreatTableTimerHandle' : ['FTimerHandle', 0x03B8], // 随机化威胁表的定时器句柄
+    'CharacterStuckTimerHandle' : ['FTimerHandle', 0x03C0],       // 角色卡住检测的定时器句柄
+
+    // --- 其他参数 ---
+    'RandomizeTreatTableTime' : ['float', 0x03A0],    // 随机化威胁表的时间间隔
+    'CharacterStuckTime' : ['float', 0x03A4],         // 判定角色卡住的时间阈值
+    'MaxDamageAggroRangeSq' : ['float', 0x03CC]       // MaxDamageAggroRange的平方，用于高效距离比较
+});
+
+// ADH_AIControllerWildlife: 野生动物AI控制器，继承自ADH_AIController，专为动物（如狼）设计
+var ADH_AIControllerWildlife = Object.assign({}, ADH_AIController, {
+    // --- 野生动物特有配置 ---
+    'bAutoEnableSight' : ['bool', 0x03D0],            // 是否自动启用视觉感知 (可能为初始化标志)
+    'LeashRange' : ['float', 0x03D4],                 // 活动范围半径，超出此范围可能放弃追逐
+    'RandomRoamRange' : ['float', 0x03D8],            // 无目标时随机漫游的范围
+    'SleepRange' : ['float', 0x03DC],                 // 睡眠触发范围，玩家超出此距离AI可能进入睡眠
+    'RoamingFilter' : ['TSubclassOf<UNavigationQueryFilter>', 0x03E0], // 漫游时使用的导航查询过滤器
+
+    // --- 受控动物引用 ---
+    'ControlledAnimal' : ['ADH_AnimalCharacter*', 0x03E8], // 指向被控制的动物角色 (狼)
+
+    // --- 缓存的计算值 ---
+    'LeashRangeSq' : ['float', 0x03F0],               // LeashRange的平方，用于高效距离比较
+    'SpawnLocation' : ['FVector', 0x03F4]             // AI生成时的位置，可能作为“家”或参考点
+});
