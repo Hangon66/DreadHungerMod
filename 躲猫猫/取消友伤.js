@@ -42,7 +42,7 @@ Interceptor.attach(ADH_HumanCharacter_TakeDamage, {
                 args[1] = 0;
             }
         }catch(err){
-            logInfo(err);
+            //logInfo('ADH_HumanCharacter_TakeDamage :' + err);
         }
         //logInfo('ADH_HumanCharacter_TakeDamage end');
     },

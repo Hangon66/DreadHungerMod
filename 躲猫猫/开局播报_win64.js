@@ -23,10 +23,11 @@ function SendThrallMessage(PlayerController,Message,Usound){
 }
 
 var MessageList = [
+"积极活跃获取任务奖励", 
 "利用一切有用的东西进行躲避/抓捕", 
 "弓100,军刀50,大枪30,斧子25", 
-"好人无敌直到暴风雪前一天", 
-"开局25秒躲藏, 不能下水，坚持到暴风雪躲藏者胜利", 
+"暴风雪前一天可以反抗抓捕者", 
+"开局30秒躲藏, 不能下水，坚持到暴风雪躲藏者胜利", 
 ]
 
 function SendMessages(PlayerController, MessageList) {

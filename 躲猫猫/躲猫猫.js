@@ -11,7 +11,7 @@ var roleNames = {
 var ThrallsRole = 2;    //躲藏者角色
 var ExplorerRole = 3;   //抓捕者角色
 var MaxPlayers = 8;     //最大玩家数
-var MaxExplorer = 0;     //最大抓捕者
+var MaxExplorer = 2;     //最大抓捕者
 var DeathUnpossessDelay = 30;   //抓捕者复活延迟
 
 //0=小枪,1=子弹,2=磨刀石,3=斧头,4=炸药桶 5=钥匙 6=铁 7=木板 8=弓 9=箭 10=大枪 11=导管 
@@ -26,13 +26,13 @@ var RoleInitInventory = new Map([
         [4,5],
         [23,99],
         [29,30],
-        [16,1],
+        [20,1],
         [9,200]
     ]],
     ['Thrall', [
         [3,1],
         [17,1],
-        [16,1],
+        [20,1],
     ]]
 ]);
 function logInfo(Info) {
@@ -389,6 +389,7 @@ Interceptor.attach(ADH_BrigCell_AddPrisoner, {
             InitThrallInventory(PlayerState);
             ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 8);
         }
+        updatePlayerProperties(PlayerState, {}, true)
         // if(!BrigCellFlag  && !IsThrall){
 
         //     if(BrigCells.length < MaxExplorer){
@@ -752,12 +753,138 @@ function giveTaskAwardInventory(PlayerState, TaskAwardInventory) {
 
 }
 
+
+
+// 更新玩家属性
+function updatePlayerProperty(PlayerState, propertyName, value) {
+    // 检查玩家是否存在
+    if (!PlayerProperties[PlayerState]) {
+        // 如果不存在，创建新玩家条目
+        PlayerProperties[PlayerState] = {};
+    }
+    
+    // 更新属性
+    PlayerProperties[PlayerState][propertyName] = value;
+
+}
+
+// 增加并应用玩家属性
+function addPlayerProperty(PlayerState, propertyName, value) {
+    //获取玩家属性
+    getPlayerProperties(PlayerState);
+    if(PlayerProperties[PlayerState] && 
+        PlayerProperties[PlayerState][propertyName] !== undefined){
+            //玩家和属性存在
+            PlayerProperties[PlayerState][propertyName] += value;
+            updatePlayerProperties(PlayerState, {}, 0);
+        }
+
+}
+
+// 批量更新并应用玩家属性
+function updatePlayerProperties(PlayerState, properties, flag) {
+    // 检查玩家是否存在
+    if (!PlayerProperties[PlayerState]) {
+        // 如果不存在，创建新玩家条目
+        PlayerProperties[PlayerState] = {};
+    }
+    
+    // 批量更新属性
+    for (var prop in properties) {
+        PlayerProperties[PlayerState][prop] = properties[prop];
+    }
+    var RealPawn = PlayerState.add(0x638).readPointer();
+    var PawnPrivate = PlayerState.add(0x280).readPointer();
+    var Array = [RealPawn, PawnPrivate];
+    for(var Pawn of Array){
+        if(Pawn.isNull()) continue;
+        for(var propertyName in PlayerProperties[PlayerState]){
+            if(propertyName == "JumpMaxCount"){
+                Pawn.add(0x344).writeU32(PlayerProperties[PlayerState][propertyName]);
+            }else if(propertyName == "MaximumHealth"){
+                var bIsDoppelganger = Pawn.add(0x11D2).readU8();
+                if(bIsDoppelganger)continue;
+                Pawn.add(0x7E0).writeFloat(PlayerProperties[PlayerState][propertyName]);
+                if(flag){
+                    Pawn.add(0x94C).writeFloat(PlayerProperties[PlayerState][propertyName]);
+                }
+            }
+        }
+    }
+}
+
+// 获取玩家特定属性
+function getPlayerProperty(PlayerState, propertyName) {
+    if (PlayerProperties[PlayerState] && 
+        PlayerProperties[PlayerState][propertyName] !== undefined) {
+        return PlayerProperties[PlayerState][propertyName];
+    }else{
+        var PlayerProperties = getPlayerProperties(PlayerState);
+        return PlayerProperties[propertyName];
+    }
+}
+
+// 获取玩家所有期望属性
+function getPlayerProperties(PlayerState) {
+    if (PlayerProperties[PlayerState]) {
+        return PlayerProperties[PlayerState];
+    }else{
+        //若玩家属性不存在则获取实际玩家属性
+        var PlayerProperties1 = getPlayerRealProperties(PlayerState);
+        PlayerProperties[PlayerState] = PlayerProperties1 || {};
+        return PlayerProperties[PlayerState];
+    }
+}
+
+// 获取玩家实际属性
+function getPlayerRealProperties(PlayerState) {
+    var RealPawn = PlayerState.add(0x638).readPointer();
+    var PawnPrivate = PlayerState.add(0x280).readPointer();
+    var Pawn;
+    var Properties = {};
+    if(!RealPawn.isNull()){
+        Pawn = RealPawn;
+        logInfo("RealPawn: " + RealPawn);
+    }else if(!PawnPrivate.isNull()){
+        Pawn = PawnPrivate;
+        logInfo("PawnPrivate: " + PawnPrivate);
+    }
+    if(Pawn.isNull())return Properties;
+    logInfo(1)
+    var JumpMaxCount = Pawn.add(0x344).readU32();
+    var MaximumHealth = Pawn.add(0x7E0).readFloat();
+    logInfo(2)
+    Properties["JumpMaxCount"] = JumpMaxCount;
+    Properties["MaximumHealth"] = MaximumHealth;
+    logInfo('Properties: ' + Properties.toString());
+    return Properties;
+}
+
+
+
+
+// 检查玩家是否存在
+function hasPlayer(PlayerState) {
+    return PlayerProperties.hasOwnProperty(PlayerState);
+}
+
+
+
+// 删除玩家
+function removePlayer(PlayerState) {
+    if (PlayerProperties[PlayerState]) {
+        delete PlayerProperties[PlayerState];
+        return true;
+    }
+    return false;
+}
+
 //奖励列表
 var TaskAwardInventorys = new Map([
     ['TOTEM_BUILT', [//制造图腾
         [17,1],
     ]],
-    ['TOTEM_BUILT', [//制造图腾1
+    ['TOTEM_BUILT1', [//制造图腾1
         [25,1],
         [2,1],
     ]],
@@ -770,6 +897,7 @@ var TaskAwardInventorys = new Map([
     ]]
 ]);
 
+var PlayerProperties = [];
 var ADH_PlayerState_ModifyMatchStat_addr = base.add(0xe42820);
 var FindByKey = new NativeFunction(base.add(0xe25f50), 'pointer', ['pointer', 'pointer'], 'win64');
 var TotelTotemCount = 0;
@@ -790,6 +918,7 @@ Interceptor.attach(ADH_PlayerState_ModifyMatchStat_addr, {
             var MatchStats = ADH_PlayerState.add(0x330);
             //logInfo('MatchStats = '+MatchStats);
             var FPlayerMatchStat = FindByKey(MatchStats, statPtr);
+            if(FPlayerMatchStat.isNull())return;
             //logInfo('FPlayerMatchStat = '+FPlayerMatchStat);
             var ScoreTotal = FPlayerMatchStat.add(0x8).readFloat();
             var Count = FPlayerMatchStat.add(0x4).readU32();
@@ -818,45 +947,33 @@ Interceptor.attach(ADH_PlayerState_ModifyMatchStat_addr, {
                         ADH_HumanCharacter.add(0x7E0).writeFloat(MaximumHealth);
                     }*/
                    //团队图腾制造奖励
+                   //logInfo('ADH_PlayerState' + ADH_PlayerState);
+                   
+                   //logInfo('RealPawn :' + ADH_PlayerState.add(0x638).readPointer());
+                   //logInfo('PawnPrivate :' + ADH_PlayerState.add(0x280).readPointer());
                     TotelTotemCount++;
-                    if(TotelTotemCount == 1){ 
+                    if(TotelTotemCount == 20){ 
                         //奖励物资
                         var ThrallsPlayerState = getThrallPlayerStates(getGameState());
                         for(var i = 0; i < ThrallsPlayerState.length; i++){
                             giveTaskAwardInventory(ThrallsPlayerState[i], 'TOTEM_BUILT');
                         }
-                    }else if(TotelTotemCount == 2){
+                    }else if(TotelTotemCount == 40){
                         //奖励连跳
                         var ThrallsPlayerState = getThrallPlayerStates(getGameState());
                         for(var ADH_PlayerState1 of ThrallsPlayerState){ 
-                            var ADH_PlayerController = ADH_PlayerState1.add(0xE0).readPointer();
-                            var ADH_HumanCharacter = ADH_PlayerController.add(0x588).readPointer();
-                            var DefaultHuman = ADH_HumanCharacter.add(0x9A8).readPointer();
-                            var DefaultJumpMaxCount = DefaultHuman.add(0x344).readU32();
-                            var JumpMaxCount = ADH_HumanCharacter.add(0x344).readU32();
-                            DefaultJumpMaxCount++;
-                            JumpMaxCount++;
-                            ADH_HumanCharacter.add(0x344).writeU32(JumpMaxCount);
-                            DefaultHuman.add(0x344).writeU32(DefaultJumpMaxCount);
+                            addPlayerProperty(ADH_PlayerState1, 'JumpMaxCount', 1);
                         }
                         
 
-                    }else if(TotelTotemCount == 3){ 
+                    }else if(TotelTotemCount == 60){ 
                         //奖励生命值
                         var ThrallsPlayerState = getThrallPlayerStates(getGameState());
                         for(var ADH_PlayerState1 of ThrallsPlayerState){ 
-                            var ADH_PlayerController = ADH_PlayerState1.add(0xE0).readPointer();
-                            var ADH_HumanCharacter = ADH_PlayerController.add(0x588).readPointer();
-                            var DefaultHuman = ADH_HumanCharacter.add(0x9A8).readPointer();
-                            var MaximumHealth = ADH_HumanCharacter.add(0x7E0).readFloat();
-                            var DefaultMaximumHealth = DefaultHuman.add(0x7E0).readFloat();
-                            MaximumHealth += 20;
-                            DefaultMaximumHealth += 20;
-                            ADH_HumanCharacter.add(0x7E0).writeFloat(MaximumHealth);
-                            DefaultHuman.add(0x7E0).writeFloat(DefaultMaximumHealth);
+                            addPlayerProperty(ADH_PlayerState1, 'MaximumHealth', 20);
                         }
 
-                    }else if(TotelTotemCount == 4){ 
+                    }else if(TotelTotemCount == 80){ 
                         //奖励物资
                         var ThrallsPlayerState = getThrallPlayerStates(getGameState());
                         for(var i = 0; i < ThrallsPlayerState.length; i++){

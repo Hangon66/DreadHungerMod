@@ -5,6 +5,13 @@ var StaticFindObject = new NativeFunction(base.add(0x137AAA0), 'pointer', ['poin
 var UClass_GetPrivateStaticClass = new NativeFunction(base.add(0x11F02E0), 'pointer', [], 'win64');
 var ADH_PlayerState_SetIsDead = new NativeFunction(base.add(0xE4E700), 'void', ['pointer', 'int8'], 'win64');
 var ADH_HumanCharacter_SetIsSpiritWalking = new NativeFunction(base.add(0xD70310), 'void', ['pointer', 'int8', 'float'], 'win64');
+var AActor_TeleportTo = new NativeFunction(base.add(0x22eb150), 'int8', ['pointer','pointer','pointer', 'int8', 'int8'], 'win64');
+var GetActorLocation = new NativeFunction(base.add(0x2988e70), "void", ['pointer', 'pointer', 'pointer'], 'win64');
+function logInfo(Info) {
+	var f = new File('output.log', 'a');
+	f.write('[Patches] ' + Info + '\n');
+	f.close();
+}
 function findClassByName(ClassName) {
     return findObjectByName(ClassName, UClass_GetPrivateStaticClass());
 }
@@ -23,6 +30,41 @@ function getArrayItemAddr(TArray, size, index) {
     if (index > ArrNum)
         return null;
     return TArray.readPointer().add(index * size);
+}
+
+function ActorTeleport(ADH_HumanCharacter, spot) {
+    var DestLocation = Memory.alloc(0xC);
+    var DestRotation = Memory.alloc(0xC);
+    DestLocation.add(0x0).writeFloat(spot[0]);
+    DestLocation.add(0x4).writeFloat(spot[1]);
+    DestLocation.add(0x8).writeFloat(spot[2]);
+    DestRotation.add(0x0).writeFloat(0);
+    DestRotation.add(0x4).writeFloat(0);
+    DestRotation.add(0x8).writeFloat(0);
+    AActor_TeleportTo(ADH_HumanCharacter, DestLocation, DestRotation, false, false)
+}
+
+
+function GetWarshipLocation(Warship) {
+    var stackFrame = Memory.alloc(16);
+    var resultPointer = Memory.alloc(12);
+    GetActorLocation(Warship, stackFrame, resultPointer);
+    return resultPointer;
+}
+
+function ReturnScroll(ADH_HumanCharacter) {
+    var ShipBase = ADH_HumanCharacter.add(0x9F8).readPointer();
+    var Spot = GetWarshipLocation(ShipBase);
+    var DestRotation = Memory.alloc(0xC);
+    DestRotation.add(0x0).writeFloat(0);
+    DestRotation.add(0x4).writeFloat(0);
+    DestRotation.add(0x8).writeFloat(0);
+    try {
+        AActor_TeleportTo(ADH_HumanCharacter, Spot, DestRotation, 0, 0)
+    } catch (error) {
+        logInfo('ReturnScroll' + error);
+    }
+    
 }
 
 var ProhibitedClassThrall = [
@@ -98,6 +140,9 @@ var SpecialInventory1 = [
     '/Game/Blueprints/Inventory/Poison/BP_Antidote_Inventory.BP_Antidote_Inventory_C',
 ];
 
+var SpecialInventory2 = [
+    '/Game/Blueprints/Inventory/Tea/BP_Tea_Inventory.BP_Tea_Inventory_C',
+];
 Interceptor.attach(ADH_Inventory_Use_Implementation_addr, {
     onEnter : function (args) {
         this.ADH_Inventory = args[0];
@@ -117,6 +162,22 @@ Interceptor.attach(ADH_Inventory_Use_Implementation_addr, {
                     ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 2);
                 }else{
                     ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 5);
+                }
+                
+            }
+        }
+        for(var i = 0; i < SpecialInventory2.length; i++){
+            var Clazz = findClassByName(SpecialInventory2[i]);
+            if(Clazz.isNull()) {
+                continue;
+            }
+            if(TargetItem.equals(Clazz)){
+                if(IsThrall){
+                    ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 3);
+                    ReturnScroll(ADH_HumanCharacter);
+                }else{
+                    ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 3);
+                    ReturnScroll(ADH_HumanCharacter);
                 }
                 
             }
