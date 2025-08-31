@@ -1,6 +1,6 @@
 
 var base = Module.findBaseAddress("DreadHungerServer-Win64-Shipping.exe");
-var SpellSelection = [[4, 2], [2, 2], [2, 2], [2, 2]];
+var SpellSelection = [[4, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2]];
 var Max = 0;
 
 for(var i = 0; i < SpellSelection.length; i++)

@@ -11,8 +11,8 @@ var roleNames = {
 var ThrallsRole = 2;    //躲藏者角色
 var ExplorerRole = 3;   //抓捕者角色
 var MaxPlayers = 8;     //最大玩家数
-var MaxExplorer = 2;     //最大抓捕者
-var DeathUnpossessDelay = 25;   //抓捕者复活延迟
+var MaxExplorer = 0;     //最大抓捕者
+var DeathUnpossessDelay = 30;   //抓捕者复活延迟
 
 //0=小枪,1=子弹,2=磨刀石,3=斧头,4=炸药桶 5=钥匙 6=铁 7=木板 8=弓 9=箭 10=大枪 11=导管 
 // 12=煤炭 13=灯笼 14=火药 15=草药 16=毒药 17=解毒剂 18=骨头 19=冰稿 20=茶 21=石头 
@@ -22,7 +22,7 @@ var RoleInitInventory = new Map([
     ['Explorer', [
         [8,1],
         [28,1],
-        [24,5],
+        [17,4],
         [4,5],
         [23,99],
         [29,30],
@@ -31,7 +31,7 @@ var RoleInitInventory = new Map([
     ]],
     ['Thrall', [
         [3,1],
-        [24,1],
+        [17,1],
         [16,1],
     ]]
 ]);
@@ -157,11 +157,20 @@ function getRemainingTotalLife(GameState) {
 
 //计算躲藏者剩余命数
 function sendRemainingTotalLife() {
-    var GameState = getGameState();
-    getRemainingTotalLife(GameState);
+    var ADH_GameState = getGameState();
+    getRemainingTotalLife(ADH_GameState);
     Message = "躲藏者剩余命数" + ThrallRemainingLife +"\n\n\n";
     //logInfo("躲藏者剩余命数" + RemainingLife);
-    SendBroadMessage(GameState, Message);
+    SendBroadMessage(ADH_GameState, Message);
+    if(ThrallRemainingLife == 0) {
+        var ADH_GameMode = ADH_GameState.add(0x228).readPointer();
+        var timer1 = setTimeout(function() {
+            SendBroadMessage(ADH_GameState, "躲藏者无一生还");
+        }, 2000);
+        var timer2 = setTimeout(function() {
+            ADH_GameMode_WarshipEscaped(ADH_GameMode, 1);
+        }, 7000);
+    }
 }
 
 Interceptor.attach(ADH_HumanCharacter_Died_addr, {
@@ -236,6 +245,21 @@ function getExplorerPlayerStates(GameState) {
         // var number = SelectedRole.add(0x58).readU8(); 
         var IsThrall = PlayerState.add(0x572).readU8();
 		if(!IsThrall){
+            ShuffleArray.push(PlayerState);    
+		}
+    }
+    return ShuffleArray;
+}
+
+function getThrallPlayerStates(GameState) {
+    var PlayerArray = GameState.add(0x238);
+    var ShuffleArray = [];
+    for(var i = 0; i < getArraySize(PlayerArray); i++) {
+        var PlayerState = getArrayItemAddr(PlayerArray, 8, i).readPointer();
+        // var SelectedRole = PlayerState.add(0x590).readPointer();
+        // var number = SelectedRole.add(0x58).readU8(); 
+        var IsThrall = PlayerState.add(0x572).readU8();
+		if(IsThrall){
             ShuffleArray.push(PlayerState);    
 		}
     }
@@ -357,7 +381,7 @@ Interceptor.attach(ADH_BrigCell_AddPrisoner, {
             //发送抓捕者复活物资
             InitExplorerInventory(PlayerState);
             //设置无敌
-            ADH_HumanCharacter.add(0x11D0).writeU8(1);
+            ADH_HumanCharacter.add(0x11D0).writeU8(0);
             //5连跳
             ADH_HumanCharacter.add(0x344).writeU32(5);
         }else{
@@ -568,7 +592,7 @@ Interceptor.attach(ADH_GameState_OnNewDayStarted_addr, {
             SendBroadMessage(ADH_GameState, "暴风雪已至,躲藏者胜利");
             var timer = setTimeout(function(){
                 ADH_GameMode_WarshipEscaped(ADH_GameMode, 0);
-            },3000);
+            },1000);
             
         }else if(DaysUntilBlizzard == 1){ 
             /* 暴风雪前一天取消好人无敌 */
@@ -731,19 +755,24 @@ function giveTaskAwardInventory(PlayerState, TaskAwardInventory) {
 //奖励列表
 var TaskAwardInventorys = new Map([
     ['TOTEM_BUILT', [//制造图腾
-        [24,1],
+        [17,1],
+    ]],
+    ['TOTEM_BUILT', [//制造图腾1
+        [25,1],
+        [2,1],
     ]],
     ['TOTEM_DESTROYED', [//摧毁图腾
-        [24,1],
+        [17,1],
     ]]
     ,
     ['Explorer_KILL_PLAYER_ENEMY', [//探险家击杀敌方
-        [24,1],
+        [17,1],
     ]]
 ]);
 
 var ADH_PlayerState_ModifyMatchStat_addr = base.add(0xe42820);
 var FindByKey = new NativeFunction(base.add(0xe25f50), 'pointer', ['pointer', 'pointer'], 'win64');
+var TotelTotemCount = 0;
 Interceptor.attach(ADH_PlayerState_ModifyMatchStat_addr, {
     onEnter: function (args) {
         this.ADH_PlayerState = args[0];
@@ -771,6 +800,9 @@ Interceptor.attach(ADH_PlayerState_ModifyMatchStat_addr, {
             //区分好人狼人奖励类型
             if(IsThrall){
                 if(Stat == PlayerMatchStatType.PMS_TOTEM_BUILT){//建造图腾
+                    //单人图腾制造奖励
+                    /*
+                    //logInfo('TOTEM_BUILT:  ' + Count);
                     if(Count == 10){ 
                         //奖励物资
                         giveTaskAwardInventory(ADH_PlayerState, 'TOTEM_BUILT');
@@ -783,8 +815,55 @@ Interceptor.attach(ADH_PlayerState_ModifyMatchStat_addr, {
                         //奖励最大生命值
                         var MaximumHealth = ADH_HumanCharacter.add(0x7E0).readFloat();
                         MaximumHealth = MaximumHealth + 20;
-                        ADH_HumanCharacter.add(0x7E0).writeU32(MaximumHealth);
+                        ADH_HumanCharacter.add(0x7E0).writeFloat(MaximumHealth);
+                    }*/
+                   //团队图腾制造奖励
+                    TotelTotemCount++;
+                    if(TotelTotemCount == 1){ 
+                        //奖励物资
+                        var ThrallsPlayerState = getThrallPlayerStates(getGameState());
+                        for(var i = 0; i < ThrallsPlayerState.length; i++){
+                            giveTaskAwardInventory(ThrallsPlayerState[i], 'TOTEM_BUILT');
+                        }
+                    }else if(TotelTotemCount == 2){
+                        //奖励连跳
+                        var ThrallsPlayerState = getThrallPlayerStates(getGameState());
+                        for(var ADH_PlayerState1 of ThrallsPlayerState){ 
+                            var ADH_PlayerController = ADH_PlayerState1.add(0xE0).readPointer();
+                            var ADH_HumanCharacter = ADH_PlayerController.add(0x588).readPointer();
+                            var DefaultHuman = ADH_HumanCharacter.add(0x9A8).readPointer();
+                            var DefaultJumpMaxCount = DefaultHuman.add(0x344).readU32();
+                            var JumpMaxCount = ADH_HumanCharacter.add(0x344).readU32();
+                            DefaultJumpMaxCount++;
+                            JumpMaxCount++;
+                            ADH_HumanCharacter.add(0x344).writeU32(JumpMaxCount);
+                            DefaultHuman.add(0x344).writeU32(DefaultJumpMaxCount);
+                        }
+                        
+
+                    }else if(TotelTotemCount == 3){ 
+                        //奖励生命值
+                        var ThrallsPlayerState = getThrallPlayerStates(getGameState());
+                        for(var ADH_PlayerState1 of ThrallsPlayerState){ 
+                            var ADH_PlayerController = ADH_PlayerState1.add(0xE0).readPointer();
+                            var ADH_HumanCharacter = ADH_PlayerController.add(0x588).readPointer();
+                            var DefaultHuman = ADH_HumanCharacter.add(0x9A8).readPointer();
+                            var MaximumHealth = ADH_HumanCharacter.add(0x7E0).readFloat();
+                            var DefaultMaximumHealth = DefaultHuman.add(0x7E0).readFloat();
+                            MaximumHealth += 20;
+                            DefaultMaximumHealth += 20;
+                            ADH_HumanCharacter.add(0x7E0).writeFloat(MaximumHealth);
+                            DefaultHuman.add(0x7E0).writeFloat(DefaultMaximumHealth);
+                        }
+
+                    }else if(TotelTotemCount == 4){ 
+                        //奖励物资
+                        var ThrallsPlayerState = getThrallPlayerStates(getGameState());
+                        for(var i = 0; i < ThrallsPlayerState.length; i++){
+                            giveTaskAwardInventory(ThrallsPlayerState[i], 'TOTEM_BUILT1');
+                        }
                     }
+
                 }
             }else{
                 if(Stat == PlayerMatchStatType.PMS_TOTEM_DESTROYED){//摧毁图腾

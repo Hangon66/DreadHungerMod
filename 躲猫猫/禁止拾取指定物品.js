@@ -95,7 +95,7 @@ Interceptor.attach(UDH_InventoryManager_AddInventory_addr, {
 });
 
 var SpecialInventory1 = [
-    '/Game/Blueprints/Inventory/Syringe/BP_Inventory_Laudanum.BP_Inventory_Laudanum_C',
+    '/Game/Blueprints/Inventory/Poison/BP_Antidote_Inventory.BP_Antidote_Inventory_C',
 ];
 
 Interceptor.attach(ADH_Inventory_Use_Implementation_addr, {
@@ -116,7 +116,7 @@ Interceptor.attach(ADH_Inventory_Use_Implementation_addr, {
                 if(IsThrall){
                     ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 2);
                 }else{
-                    ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 6);
+                    ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 5);
                 }
                 
             }

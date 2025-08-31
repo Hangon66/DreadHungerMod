@@ -1,9 +1,10 @@
-var flag_end = 1;
+function logInfo(Info) {
+	var f = new File('output.log', 'a');
+	f.write('[Patches] ' + Info + '\n');
+	f.close();
+}
 
-
-// 向指定地址写入一字节 0x74
-if (flag_end) {
-    // 修改物品丢弃相关的条件跳转
+try {
     var targetAddress = base.add(0xD9D27F); // 目标地址
     // 确保内存可写
     Memory.protect(targetAddress, 1, 'rwx');
@@ -11,6 +12,11 @@ if (flag_end) {
     targetAddress.writeU8(0x74);
     // 恢复内存保护（只读可执行）
     Memory.protect(targetAddress, 1, 'rx');
+
+
+} catch (error) {
+    
+    logInfo("[*] 获取游戏基址失败");
 }
 
 

@@ -47,7 +47,8 @@ UpgradeBonusDamage=磨刀石额外伤害
 var InventoryTable = {
     '/Game/Blueprints/Inventory/Flintlock/BP_Flintlock_Inventory.BP_Flintlock_Inventory_C' : {      //小枪
         'MaxStackCount' : 1,
-		'DurabilityUses' : 999
+		'DurabilityUses' : 999,
+        'ReloadTime' : 0.1
     },
     '/Game/Blueprints/Inventory/Musket/BP_Musket_Inventory.BP_Musket_Inventory_C' : {      //大枪
         'MaxStackCount' : 1,
@@ -196,11 +197,17 @@ var PropertyOffsets = {
     'UpgradeBonusDamage' : ['float', 0x84C],//磨刀石增加伤害
     'AimEntryTime' : ['float', 0x2C4],//进入瞄准耗时
     'AimExitTime' : ['float', 0x2C8],//离开瞄准耗时
+    'bCanBeReloaded' : ['int8', 0x3B0],//是否支持装填操作
+    'bReloadAfterUse' : ['int8', 0x3B1],//使用后自动装填
+    'ReloadTime' : ['float', 0x3B4],//装填时间
+    'bPoisonItem' : ['int8', 0x457],//是否有毒？
+    'bTaintedByDefault' : ['int8', 0x459],//是否被污染？
     'bHasDurability' : ['int8', 0x441],//是否存在耐久
     'bDestroyOnZeroDurability' : ['int8', 0x442],//耐久度归零时是否自动销毁物品
     'bAlwaysDamageWhenDropped' : ['int8', 0x444],//丢弃物品时是否必定造成耐久度损伤
     'bDamageWhenUsed' : ['int8', 0x445],//是否消耗耐久
     'DefaultDurability' : ['float', 0x448],//默认最大耐久度值
+    'DefaultUsesRemaining ' : ['int8', 0x500],//剩余耐久
     'UseCooldown' : ['float', 0x520],//使用冷却
     'bCanBeDropped' : ['int8', 0x690],//是否可以被主动丢弃
     'bObliterateWithCarrier' : ['int8', 0x691],//拥有者死亡则物品消失
