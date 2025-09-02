@@ -1164,3 +1164,16 @@ var UCharacterMovementComponent = {
     'ProcessRootMotionPreConvertToWorld': ['delegate', 0xAE0], // 根运动转换到世界坐标前的处理委托
     'ProcessRootMotionPostConvertToWorld': ['delegate', 0xAF0] // 根运动转换到世界坐标后的处理委托
 };
+
+var UDamageType = {
+    // --- 基础属性 ---
+    'bCausedByWorld' : ['uint32', 0x28, 0],           // bit 0: 是否由世界（如环境）造成
+    'bScaleMomentumByMass' : ['uint32', 0x28, 1],     // bit 1: 是否根据质量缩放动量
+    'bRadialDamageVelChange' : ['uint32', 0x28, 2],   // bit 2: 是否对径向伤害应用速度变化
+
+    // --- 浮点参数 ---
+    'DamageImpulse' : ['float', 0x2C],                // 伤害冲量（影响击退强度）
+    'DestructibleImpulse' : ['float', 0x30],          // 对可破坏物的冲量
+    'DestructibleDamageSpreadScale' : ['float', 0x34], // 可破坏物伤害扩散缩放
+    'DamageFalloff' : ['float', 0x38],                // 伤害衰减系数（如距离衰减）
+}

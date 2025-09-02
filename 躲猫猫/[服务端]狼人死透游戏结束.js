@@ -4,7 +4,7 @@ function logInfo(Info) {
 	f.close();
 }
 var base = Module.findBaseAddress('DreadHungerServer-Win64-Shipping.exe');
-//d74e31
+
 try {
     var targetAddress = base.add(0xD9D27F); // 目标地址
     // 确保内存可写

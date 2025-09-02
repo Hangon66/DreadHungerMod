@@ -143,7 +143,7 @@ var RoleInitInventory = new Map([
     ]],
     ['Engineer', [
         [3,1],
-        [17,1],
+        [17,2],
         [20,1],
         [23,99],
     ]],

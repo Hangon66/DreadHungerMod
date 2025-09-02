@@ -22,13 +22,16 @@ var RoleInitInventory = new Map([
     ['Explorer', [//抓捕者装备
         [8,1],
         [28,1],
-        [17,3],
+        [17,1],
         [4,5],
-        [30,2],
+        [30,1],
         [20,1],
         [23,99],
         [29,30],
         [9,200],
+    ]],
+    ['Explorer2', [//抓捕者装备
+        [17,1],
     ]],
     ['Thrall', [//躲藏者装备
         [3,1],
@@ -179,22 +182,23 @@ Interceptor.attach(ADH_HumanCharacter_Died_addr, {
         this.ADH_HumanCharacter = args[0];
         var ADH_HumanCharacter = args[0];
         var ADH_PlayerState = ADH_HumanCharacter.add(0x240).readPointer();
+        this.bIsDoppelganger = ADH_HumanCharacter.add(0x11D2).readU8();
         this.IsThrall = ADH_PlayerState.add(0x572).readU8(); 
     },onLeave : function(retval) {
         try{
             var ADH_HumanCharacter = this.ADH_HumanCharacter;
-            var bIsDoppelganger = ADH_HumanCharacter.add(0x11D2).readU8();
+            var bIsDoppelganger = this.bIsDoppelganger;
             var IsThrall = this.IsThrall;
             if(IsThrall && !bIsDoppelganger){
                 sendRemainingTotalLife();
-            }else{
+            }else if(!IsThrall){
                 var ADH_GameState = getGameState();
                 var ADH_GameMode = ADH_GameState.add(0x228).readPointer();
                 getRemainingTotalLife(ADH_GameState);
                 if(ExplorerRemainingLife <= 0){
                     SendBroadMessage(ADH_GameState, "你们打倒了抓捕者,躲藏者胜利");
                     var timer = setTimeout(function(){
-                        ADH_GameMode_WarshipEscaped(ADH_GameMode, 1);
+                        //ADH_GameMode_WarshipEscaped(ADH_GameMode, 1);
                     },8000);
                 }
             }
@@ -362,15 +366,15 @@ Interceptor.attach(ADH_BrigCell_AddPrisoner, {
     },
     onLeave: function (ret) {
         var ADH_BrigCell = this.ADH_BrigCell;
-        var PlayerState = ADH_BrigCell.add(0x2F0).readPointer();
-        var IsThrall = PlayerState.add(0x572).readU8();
+        var ADH_PlayerState = ADH_BrigCell.add(0x2F0).readPointer();
+        var IsThrall = ADH_PlayerState.add(0x572).readU8();
         try{
             ADH_BrigCell_FreePrisoner(ADH_BrigCell, ptr(0));
         }catch(e){
             logInfo(e);
         }
         
-        var ADH_PlayerController = PlayerState.add(0xE0).readPointer();
+        var ADH_PlayerController = ADH_PlayerState.add(0xE0).readPointer();
         var ADH_HumanCharacter = ADH_PlayerController.add(0x588).readPointer();
         //var ADH_BrigDoor = ADH_BrigCell.add(0x300).readPointer();
         try{
@@ -380,17 +384,17 @@ Interceptor.attach(ADH_BrigCell_AddPrisoner, {
         }
         if(!IsThrall){
             //发送抓捕者复活物资
-            InitExplorerInventory(PlayerState);
+            InitExplorerInventory(ADH_PlayerState, 'Explorer');
             //设置无敌
             ADH_HumanCharacter.add(0x11D0).writeU8(1);
             //5连跳
             ADH_HumanCharacter.add(0x344).writeU32(5);
         }else{
             //狼人复活灵界
-            InitThrallInventory(PlayerState);
+            InitThrallInventory(ADH_PlayerState);
             ADH_HumanCharacter_SetIsSpiritWalking(ADH_HumanCharacter, 1, 8);
         }
-        updatePlayerProperties(PlayerState, {}, true)
+        updatePlayerProperties(ADH_PlayerState, {}, true)
         // if(!BrigCellFlag  && !IsThrall){
 
         //     if(BrigCells.length < MaxExplorer){
@@ -508,9 +512,9 @@ var RegisterItemClass = new Map([
 ]);
 
 
-function InitExplorerInventory(PlayerState) {
+function InitExplorerInventory(PlayerState, Inventorys) {
     //logInfo('InitExplorerInventory');
-    var DesiredInventory = RoleInitInventory.get('Explorer');
+    var DesiredInventory = RoleInitInventory.get(Inventorys);
     if (DesiredInventory.length == 0) {
         return;
     }
@@ -602,6 +606,8 @@ Interceptor.attach(ADH_GameState_OnNewDayStarted_addr, {
                 var ADH_PlayerController = ADH_PlayerState.add(0xE0).readPointer();
                 var ADH_HumanCharacter = ADH_PlayerController.add(0x588).readPointer();
                 ADH_HumanCharacter.add(0x11D0).writeU8(0);
+                InitExplorerInventory(ADH_PlayerState, 'Explorer2')
+
             }
             var timer = setTimeout(function(){
                 SendBroadMessage(ADH_GameState, "反抗时刻,谁是猎人谁是猎物");
@@ -753,6 +759,57 @@ function giveTaskAwardInventory(PlayerState, TaskAwardInventory) {
 }
 
 
+function processProperty(PropTable, Data, TargetObject) {
+    for(var PropertyName in Data) {
+        var Value = Data[PropertyName];
+        if(TargetObject.isNull())return;
+        if(PropTable.hasOwnProperty(PropertyName)) {
+            //修改ADH_HumanCharacter
+            var WriteType = PropTable[PropertyName][0];
+            var Offset = PropTable[PropertyName][1];
+            var TargetPointer = TargetObject.add(Offset);
+            if(WriteType == 'int8') {
+                TargetPointer.writeU8(Value);
+            }
+            else if(WriteType == 'int16') {
+                TargetPointer.writeU16(Value);
+            }
+            else if(WriteType == 'int32') {
+                TargetPointer.writeU32(Value);
+            }
+            else if(WriteType == 'int64') {
+                TargetPointer.writeU64(Value);
+            }
+            else if(WriteType == 'float') {
+                TargetPointer.writeFloat(Value);
+            }
+            
+        }else if(UCharacterMovementComponentPropertyOffsets.hasOwnProperty(PropertyName)){
+            //修改UCharacterMovementComponent
+            var WriteType = UCharacterMovementComponentPropertyOffsets[PropertyName][0];
+            var Offset = UCharacterMovementComponentPropertyOffsets[PropertyName][1];
+            var TargetPointer = TargetObject.add(0x288).readPointer().add(Offset);
+            if(WriteType == 'int8') {
+                TargetPointer.writeU8(Value);
+            }
+            else if(WriteType == 'int16') {
+                TargetPointer.writeU16(Value);
+            }
+            else if(WriteType == 'int32') {
+                TargetPointer.writeU32(Value);
+            }
+            else if(WriteType == 'int64') {
+                TargetPointer.writeU64(Value);
+            }
+            else if(WriteType == 'float') {
+                TargetPointer.writeFloat(Value);
+            }
+        }
+
+        
+
+    }
+}
 
 // 更新玩家属性
 function updatePlayerProperty(PlayerState, propertyName, value) {
@@ -797,18 +854,10 @@ function updatePlayerProperties(PlayerState, properties, flag) {
     var Array = [RealPawn, PawnPrivate];
     for(var Pawn of Array){
         if(Pawn.isNull()) continue;
-        for(var propertyName in PlayerProperties[PlayerState]){
-            if(propertyName == "JumpMaxCount"){
-                Pawn.add(0x344).writeU32(PlayerProperties[PlayerState][propertyName]);
-            }else if(propertyName == "MaximumHealth"){
-                var bIsDoppelganger = Pawn.add(0x11D2).readU8();
-                if(bIsDoppelganger)continue;
-                Pawn.add(0x7E0).writeFloat(PlayerProperties[PlayerState][propertyName]);
-                if(flag){
-                    Pawn.add(0x94C).writeFloat(PlayerProperties[PlayerState][propertyName]);
-                }
-            }
-        }
+        processProperty(HumanCharacterPropertyOffsets, PlayerProperties[PlayerState], Pawn);
+		if(flag){
+			processProperty(HumanCharacterPropertyOffsets, {"CurrentHealth" : PlayerProperties[PlayerState]["CurrentHealth"]}, Pawn)
+		}
     }
 }
 
@@ -876,6 +925,30 @@ function removePlayer(PlayerState) {
     return false;
 }
 
+var HumanCharacterPropertyOffsets = {
+    'JumpMaxCount' : ['int32', 0x344],//连跳次数
+	'MaximumHealth' : ['float', 0x7E0],//最大血量
+    'CurrentHealth' : ['float', 0x94C],//当前血量
+    'JumpStaminaConsumption' : ['float', 0x0A8C],//跳跃体力消耗
+    'bNeverRevive' : ['int8', 0x0B24], // 是否禁止复活
+    'bHideGhost' : ['int8', 0x0BC9], // 是否隐藏幽灵
+    'bIsLobbyPawn' : ['int8', 0x11D0], // 是否无敌
+    'MinHealth' : ['float', 0x1000], // 最小生命值
+    'bUpdateHunger' : ['int8', 0x0A40], // 是否更新饥饿，不更新就不会自然恢复生命值
+    'bUpdateWarmth' : ['int8', 0x0A41], // 是否更新体温
+};
+
+var UCharacterMovementComponentPropertyOffsets = {
+    'GravityScale': ['float', 0x150], // 重力
+    'MaxStepHeight': ['float', 0x154], // 最大可攀爬台阶高度
+    'WalkableFloorZ': ['float', 0x164], // 可行走地面的最小法线Z分量
+    'MaxWalkSpeed': ['float', 0x18C], // 步行最大速度
+    'MaxSwimSpeed': ['float', 0x194], // 游泳最大速度
+    'MaxAcceleration': ['float', 0x1A0], // 最大加速度
+    'AirControl': ['float', 0x1C4], // 空中控制力
+    'Buoyancy': ['float', 0x1D8], // 浮力系数
+}
+
 //奖励列表
 var TaskAwardInventorys = new Map([
     ['TOTEM_BUILT', [//制造图腾
@@ -922,8 +995,12 @@ Interceptor.attach(ADH_PlayerState_ModifyMatchStat_addr, {
             var IsThrall = ADH_PlayerState.add(0x572).readU8();
             var ADH_PlayerController = ADH_PlayerState.add(0xE0).readPointer();
             var ADH_HumanCharacter = ADH_PlayerController.add(0x588).readPointer();
+            var bIsDoppelganger = ADH_HumanCharacter.add(0x11D2).readU8();
             //logInfo(' ScoreTotal ' + ScoreTotal + ' Count ' + Count);
             //区分好人狼人奖励类型
+            // logInfo('ADH_HumanCharacter :' + ADH_HumanCharacter);
+            // logInfo('IsThrall: ' + IsThrall)
+            // logInfo('bIsDoppelganger :' + bIsDoppelganger)
             if(IsThrall){
                 if(Stat == PlayerMatchStatType.PMS_TOTEM_BUILT){//建造图腾
                     //单人图腾制造奖励
@@ -944,34 +1021,35 @@ Interceptor.attach(ADH_PlayerState_ModifyMatchStat_addr, {
                         ADH_HumanCharacter.add(0x7E0).writeFloat(MaximumHealth);
                     }*/
                    //团队图腾制造奖励
-                   logInfo('ADH_PlayerState :' + ADH_PlayerState);
+                   //logInfo('ADH_PlayerState :' + ADH_PlayerState);
                    
                    //logInfo('RealPawn :' + ADH_PlayerState.add(0x638).readPointer());
                    //logInfo('PawnPrivate :' + ADH_PlayerState.add(0x280).readPointer());
-                    logInfo('ADH_HumanCharacter :' + ADH_HumanCharacter);
+
                     TotelTotemCount++;
-                    if(TotelTotemCount == 20){ 
+                    if(TotelTotemCount == 10){ 
                         //奖励物资
                         var ThrallsPlayerState = getThrallPlayerStates(getGameState());
                         for(var i = 0; i < ThrallsPlayerState.length; i++){
                             giveTaskAwardInventory(ThrallsPlayerState[i], 'TOTEM_BUILT');
                         }
-                    }else if(TotelTotemCount == 40){
+                    }else if(TotelTotemCount == 20){
                         //奖励连跳
                         var ThrallsPlayerState = getThrallPlayerStates(getGameState());
                         for(var ADH_PlayerState1 of ThrallsPlayerState){ 
-                            addPlayerProperty(ADH_PlayerState1, 'JumpMaxCount', 1);
+                            addPlayerProperty(ADH_PlayerState1, 'JumpMaxCount', 2);
+                            updatePlayerProperties(ADH_PlayerState1, {'JumpStaminaConsumption' :  0}, 0);
                         }
                         
 
-                    }else if(TotelTotemCount == 60){ 
+                    }else if(TotelTotemCount == 30){ 
                         //奖励生命值
                         var ThrallsPlayerState = getThrallPlayerStates(getGameState());
                         for(var ADH_PlayerState1 of ThrallsPlayerState){ 
                             addPlayerProperty(ADH_PlayerState1, 'MaximumHealth', 20);
                         }
 
-                    }else if(TotelTotemCount == 80){ 
+                    }else if(TotelTotemCount == 40){ 
                         //奖励物资
                         var ThrallsPlayerState = getThrallPlayerStates(getGameState());
                         for(var i = 0; i < ThrallsPlayerState.length; i++){
@@ -986,7 +1064,7 @@ Interceptor.attach(ADH_PlayerState_ModifyMatchStat_addr, {
                 }
             }else{
                 if(Stat == PlayerMatchStatType.PMS_TOTEM_DESTROYED){//摧毁图腾
-                    if(Count%20 == 0){ 
+                    if(Count%15 == 0){ 
                         //奖励物资
                         giveTaskAwardInventory(ADH_PlayerState, 'TOTEM_DESTROYED');
                     }

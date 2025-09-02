@@ -58,7 +58,7 @@ var InventoryTable = {
 	'/Game/Blueprints/Inventory/Sword/BP_Sword_Inventory.BP_Sword_Inventory_C' : {      //军刀
 		'MaxStackCount' : 1,
 		'DurabilityUses' : 999,
-        'Damage' : 50,
+        'Damage' : 60,
         'bHasDurability' : 0,
         'ThrowCost' : 0,
         'ThrowDelay' : 0
@@ -69,7 +69,7 @@ var InventoryTable = {
     },
     '/Game/Blueprints/Inventory/Bow/BP_Bow_Inventory.BP_Bow_Inventory_C' : {      //弓
         'MaxStackCount' : 1,
-        'Damage' : 100,
+        'Damage' : 120,
     },
     '/Game/Blueprints/Inventory/Flint/BP_GunParts_Inventory.BP_GunParts_Inventory_C' : {      //枪械零件
         'MaxStackCount' : 1
@@ -78,7 +78,7 @@ var InventoryTable = {
         'MaxStackCount' : 999
     },
     '/Game/Blueprints/Inventory/Bow/BP_Arrows_Inventory.BP_Arrows_Inventory_C' : {      //箭
-        'MaxStackCount' : 999
+        'MaxStackCount' : 255
     },
     '/Game/Blueprints/Inventory/WoodAxe/BP_WoodAxe_Inventory.BP_WoodAxe_Inventory_C' : {      //斧头
         'MaxStackCount' : 1,
@@ -96,13 +96,13 @@ var InventoryTable = {
         'MaxStackCount' : 1
     },
     '/Game/Blueprints/Inventory/Stick/BP_Stick_Inventory.BP_Stick_Inventory_C' : {      //木板
-        'MaxStackCount' : 999
+        'MaxStackCount' : 255
     },
     '/Game/Blueprints/Inventory/Rock/BP_Rock_Inventory.BP_Rock_Inventory_C' : {      //石头
         'MaxStackCount' : 999
     },
     '/Game/Blueprints/Inventory/Metals/BP_IronIngot_Inventory.BP_IronIngot_Inventory_C' : {      //废铁
-        'MaxStackCount' : 999
+        'MaxStackCount' : 255
     },
     '/Game/Blueprints/Inventory/Metals/BP_Nails_Inventory.BP_Nails_Inventory_C' : {      //钉子
         'MaxStackCount' : 999
@@ -144,7 +144,7 @@ var InventoryTable = {
         'MaxStackCount' : 99
     },
     '/Game/Blueprints/Inventory/Meat/BP_BoneClub_Inventory.BP_BoneClub_Inventory_C' : {      //骨棒
-        'MaxStackCount' : 99
+        'MaxStackCount' : 255
     },
     '/Game/Blueprints/Inventory/AnimalParts/BP_Blubber_Inventory.BP_Blubber_Inventory_C' : {      //脂肪
         'MaxStackCount' : 99
