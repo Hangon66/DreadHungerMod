@@ -9,8 +9,14 @@ var JumpMaxCount = 2;
 var TargetPlayerProperties = {
             "MaximumHealth" : MaximumHealth
             , "JumpMaxCount" : JumpMaxCount
-            , "bUpdateHunger" : 0
-            , "bUpdateWarmth" : 0
+            , "bUpdateHunger" : 1
+            , "bUpdateWarmth" : 1
+            , 'GravityScale': 0.2
+            , 'MaxStepHeight': 5000
+            , 'WalkableFloorZ': 0
+            , 'MaxWalkSpeed': 1000
+            , 'MaxSwimSpeed': 1000
+            , 'Buoyancy': 50
         };
 
 var HumanCharacterPropertyOffsets = {
@@ -26,10 +32,22 @@ var HumanCharacterPropertyOffsets = {
     'bUpdateWarmth' : ['int8', 0x0A41], // 是否更新体温
 };
 
+var UCharacterMovementComponentPropertyOffsets = {
+    'GravityScale': ['float', 0x150], // 重力,卡爆了
+    'MaxStepHeight': ['float', 0x154], // 最大可攀爬台阶高度
+    'WalkableFloorZ': ['float', 0x164], // 可行走地面的最小法线Z分量
+    'MaxWalkSpeed': ['float', 0x18C], // 步行最大速度,卡爆了
+    'MaxSwimSpeed': ['float', 0x194], // 游泳最大速度,卡爆了
+    'MaxAcceleration': ['float', 0x1A0], // 最大加速度
+    'AirControl': ['float', 0x1C4], // 空中控制力
+    'Buoyancy': ['float', 0x1D8], // 浮力系数
+}
+
 function processProperty(PropTable, Data, TargetObject) {
     for(var PropertyName in Data) {
         var Value = Data[PropertyName];
         if(PropTable.hasOwnProperty(PropertyName)) {
+            //修改ADH_HumanCharacter
             var WriteType = PropTable[PropertyName][0];
             var Offset = PropTable[PropertyName][1];
             var TargetPointer = TargetObject.add(Offset);
@@ -49,7 +67,30 @@ function processProperty(PropTable, Data, TargetObject) {
                 TargetPointer.writeFloat(Value);
             }
             
+        }else if(UCharacterMovementComponentPropertyOffsets.hasOwnProperty(PropertyName)){
+            //修改UCharacterMovementComponent
+            var WriteType = UCharacterMovementComponentPropertyOffsets[PropertyName][0];
+            var Offset = UCharacterMovementComponentPropertyOffsets[PropertyName][1];
+            var TargetPointer = TargetObject.add(0x288).readPointer().add(Offset);
+            if(WriteType == 'int8') {
+                TargetPointer.writeU8(Value);
+            }
+            else if(WriteType == 'int16') {
+                TargetPointer.writeU16(Value);
+            }
+            else if(WriteType == 'int32') {
+                TargetPointer.writeU32(Value);
+            }
+            else if(WriteType == 'int64') {
+                TargetPointer.writeU64(Value);
+            }
+            else if(WriteType == 'float') {
+                TargetPointer.writeFloat(Value);
+            }
         }
+
+        
+
     }
 }
 

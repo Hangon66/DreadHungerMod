@@ -953,3 +953,214 @@ var ADH_AIControllerWildlife = Object.assign({}, ADH_AIController, {
     'LeashRangeSq' : ['float', 0x03F0],               // LeashRange的平方，用于高效距离比较
     'SpawnLocation' : ['FVector', 0x03F4]             // AI生成时的位置，可能作为“家”或参考点
 });
+
+var UCharacterMovementComponent = {
+    // --- 基础物理与移动参数 ---
+    'CharacterOwner': ['pointer', 0x148], // 指向所属的ACharacter实例
+    'GravityScale': ['float', 0x150], // 重力缩放系数
+    'MaxStepHeight': ['float', 0x154], // 最大可攀爬台阶高度
+    'JumpZVelocity': ['float', 0x158], // 跳跃时的Z轴初速度
+    'JumpOffJumpZFactor': ['float', 0x15C], // 跳离物体时跳跃Z速度的缩放因子
+    'WalkableFloorAngle': ['float', 0x160], // 可行走地面的最大倾斜角度（度）
+    'WalkableFloorZ': ['float', 0x164], // 可行走地面的最小法线Z分量
+    'MovementMode': ['byte', 0x168], // 当前移动模式 (EMovementMode)
+    'CustomMovementMode': ['byte', 0x169], // 自定义移动模式
+    'NetworkSmoothingMode': ['byte', 0x16A], // 网络平滑模式
+    // 0x16B: 填充字节 (padding byte)
+    'GroundFriction': ['float', 0x16C], // 地面摩擦系数
+    'OldBaseQuat': ['quaternion', 0x170], // 上一次的基座四元数
+    'OldBaseLocation': ['vector', 0x180], // 上一次的基座位置
+    'MaxWalkSpeed': ['float', 0x18C], // 步行最大速度
+    'MaxWalkSpeedCrouched': ['float', 0x190], // 蹲伏时最大速度
+    'MaxSwimSpeed': ['float', 0x194], // 游泳最大速度
+    'MaxFlySpeed': ['float', 0x198], // 飞行最大速度
+    'MaxCustomMovementSpeed': ['float', 0x19C], // 自定义移动最大速度
+    'MaxAcceleration': ['float', 0x1A0], // 最大加速度
+    'MinAnalogWalkSpeed': ['float', 0x1A4], // 模拟输入最小行走速度
+    'BrakingFrictionFactor': ['float', 0x1A8], // 刹车摩擦系数因子
+    'BrakingFriction': ['float', 0x1AC], // 刹车摩擦力
+    'BrakingSubStepTime': ['float', 0x1B0], // 刹车子步时间
+    'BrakingDecelerationWalking': ['float', 0x1B4], // 行走时刹车减速度
+    'BrakingDecelerationFalling': ['float', 0x1B8], // 下落时刹车减速度
+    'BrakingDecelerationSwimming': ['float', 0x1BC], // 游泳时刹车减速度
+    'BrakingDecelerationFlying': ['float', 0x1C0], // 飞行时刹车减速度
+    'AirControl': ['float', 0x1C4], // 空中控制力
+    'AirControlBoostMultiplier': ['float', 0x1C8], // 空中控制增强倍率
+    'AirControlBoostVelocityThreshold': ['float', 0x1CC], // 触发空中控制增强的速度阈值
+    'FallingLateralFriction': ['float', 0x1D0], // 下落时横向摩擦力
+    'CrouchedHalfHeight': ['float', 0x1D4], // 蹲伏状态胶囊体半高
+    'Buoyancy': ['float', 0x1D8], // 浮力系数
+    'PerchRadiusThreshold': ['float', 0x1DC], // 可栖息边缘的半径阈值
+    'PerchAdditionalHeight': ['float', 0x1E0], // 栖息时额外增加的高度
+    'RotationRate': ['rotator', 0x1E4], // 旋转速率 (FRotator)
+
+    // --- 布尔标志位 (从 0x1F0 开始的位域) ---
+    'bUseSeparateBrakingFriction': ['bool', 0x1F0], // 是否使用独立的刹车摩擦力
+    'bApplyGravityWhileJumping': ['bool', 0x1F0], // 跳跃时是否应用重力
+    'bUseControllerDesiredRotation': ['bool', 0x1F0], // 是否使用控制器期望的旋转
+    'bOrientRotationToMovement': ['bool', 0x1F0], // 是否将角色朝向与移动方向对齐
+    'bSweepWhileNavWalking': ['bool', 0x1F0], // 导航行走时是否进行扫掠检测
+    'bNeedsSweepWhileWalkingUpdate': ['bool', 0x1F0], // 行走更新时是否需要扫掠
+    'bMovementInProgress': ['bool', 0x1F0], // 移动是否正在进行中
+    'bEnableScopedMovementUpdates': ['bool', 0x1F0], // 是否启用范围移动更新
+    'bEnableServerDualMoveScopedMovementUpdates': ['bool', 0x1F1], // 服务器是否启用双移动范围更新
+    'bForceMaxAccel': ['bool', 0x1F1], // 是否强制使用最大加速度
+    'bRunPhysicsWithNoController': ['bool', 0x1F1], // 无控制器时是否继续运行物理
+    'bForceNextFloorCheck': ['bool', 0x1F1], // 是否强制下一次地板检测
+    'bShrinkProxyCapsule': ['bool', 0x1F1], // 网络代理是否缩小胶囊体
+    'bCanWalkOffLedges': ['bool', 0x1F1], // 是否可以从边缘走下
+    'bCanWalkOffLedgesWhenCrouching': ['bool', 0x1F1], // 蹲伏时是否可以从边缘走下
+    'bNetworkSmoothingComplete': ['bool', 0x1F1], // 网络平滑是否已完成
+    'bNetworkLargeClientCorrection': ['bool', 0x1F2], // 是否发生大型客户端校正
+    'bNetworkSkipProxyPredictionOnNetUpdate': ['bool', 0x1F2], // 网络更新时是否跳过代理预测
+    'bNetworkAlwaysReplicateTransformUpdateTimestamp': ['bool', 0x1F2], // 是否始终复制变换更新时间戳
+    'bDeferUpdateMoveComponent': ['bool', 0x1F2], // 是否延迟更新移动组件
+    'bEnablePhysicsInteraction': ['bool', 0x1F2], // 是否启用物理交互
+    'bTouchForceScaledToMass': ['bool', 0x1F2], // 接触力是否按质量缩放
+    'bPushForceScaledToMass': ['bool', 0x1F2], // 推力是否按质量缩放
+    'bPushForceUsingZOffset': ['bool', 0x1F2], // 推力是否使用Z轴偏移
+    'bScalePushForceToVelocity': ['bool', 0x1F3], // 推力是否根据速度缩放
+    // 0x1F3.1 到 0x1F3.7: 填充位 (padding bits)
+    // 0x1F4 - 0x1F7: 填充字节 (padding bytes)
+
+    // --- 其他指针与属性 ---
+    'DeferredUpdatedMoveComponent': ['pointer', 0x1F8], // 延迟更新的移动组件 (USceneComponent*)
+    'MaxOutOfWaterStepHeight': ['float', 0x200], // 水外最大台阶高度
+    'OutofWaterZ': ['float', 0x204], // 离开水体时的Z值
+    'Mass': ['float', 0x208], // 质量
+    'StandingDownwardForceScale': ['float', 0x20C], // 站立时向下的力缩放
+    'InitialPushForceFactor': ['float', 0x210], // 初始推力因子
+    'PushForceFactor': ['float', 0x214], // 推力因子
+    'PushForcePointZOffsetFactor': ['float', 0x218], // 推力作用点Z偏移因子
+    'TouchForceFactor': ['float', 0x21C], // 接触力因子
+    'MinTouchForce': ['float', 0x220], // 最小接触力
+    'MaxTouchForce': ['float', 0x224], // 最大接触力
+    'RepulsionForce': ['float', 0x228], // 排斥力
+    'Acceleration': ['vector', 0x22C], // 当前加速度
+    // 0x238 - 0x23F: 填充字节 (padding bytes)
+    'LastUpdateRotation': ['quaternion', 0x240], // 上次更新时的旋转
+    'LastUpdateLocation': ['vector', 0x250], // 上次更新时的位置
+    'LastUpdateVelocity': ['vector', 0x25C], // 上次更新时的速度
+    'ServerLastTransformUpdateTimeStamp': ['float', 0x268], // 服务器最后一次变换更新时间戳
+    'ServerLastClientGoodMoveAckTime': ['float', 0x26C], // 服务器收到客户端良好移动确认的最后时间
+    'ServerLastClientAdjustmentTime': ['float', 0x270], // 服务器最后一次客户端调整时间
+    'PendingImpulseToApply': ['vector', 0x274], // 待应用的冲量
+    'PendingForceToApply': ['vector', 0x280], // 待应用的力
+    'AnalogInputModifier': ['float', 0x28C], // 模拟输入修正因子
+    'LastStuckWarningTime': ['float', 0x290], // 上次卡住警告时间
+    'StuckWarningCountSinceNotify': ['uint32', 0x294], // 自上次通知以来的卡住警告次数
+    'NumJumpApexAttempts': ['int32', 0x298], // 尝试达到跳跃顶点的次数
+    'MaxSimulationTimeStep': ['float', 0x29C], // 最大模拟时间步长
+    'MaxSimulationIterations': ['int32', 0x2A0], // 最大模拟迭代次数
+    'MaxJumpApexAttemptsPerSimulation': ['int32', 0x2A4], // 每次模拟中最大跳跃顶点尝试次数
+    'MaxDepenetrationWithGeometry': ['float', 0x2A8], // 与几何体分离的最大距离
+    'MaxDepenetrationWithGeometryAsProxy': ['float', 0x2AC], // 代理模式下与几何体分离的最大距离
+    'MaxDepenetrationWithPawn': ['float', 0x2B0], // 与其他Pawn分离的最大距离
+    'MaxDepenetrationWithPawnAsProxy': ['float', 0x2B4], // 代理模式下与其他Pawn分离的最大距离
+    'NetworkSimulatedSmoothLocationTime': ['float', 0x2B8], // 网络模拟位置平滑时间
+    'NetworkSimulatedSmoothRotationTime': ['float', 0x2BC], // 网络模拟旋转平滑时间
+    'ListenServerNetworkSimulatedSmoothLocationTime': ['float', 0x2C0], // 监听服务器网络模拟位置平滑时间
+    'ListenServerNetworkSimulatedSmoothRotationTime': ['float', 0x2C4], // 监听服务器网络模拟旋转平滑时间
+    'NetProxyShrinkRadius': ['float', 0x2C8], // 网络代理收缩半径
+    'NetProxyShrinkHalfHeight': ['float', 0x2CC], // 网络代理收缩半高
+    'NetworkMaxSmoothUpdateDistance': ['float', 0x2D0], // 网络最大平滑更新距离
+    'NetworkNoSmoothUpdateDistance': ['float', 0x2D4], // 网络无平滑更新距离
+    'NetworkMinTimeBetweenClientAckGoodMoves': ['float', 0x2D8], // 客户端确认良好移动的最小间隔时间
+    'NetworkMinTimeBetweenClientAdjustments': ['float', 0x2DC], // 客户端调整的最小间隔时间
+    'NetworkMinTimeBetweenClientAdjustmentsLargeCorrection': ['float', 0x2E0], // 大型校正时客户端调整的最小间隔时间
+    'NetworkLargeClientCorrectionDistance': ['float', 0x2E4], // 触发大型客户端校正的距离
+    'LedgeCheckThreshold': ['float', 0x2E8], // 边缘检测阈值
+    'JumpOutOfWaterPitch': ['float', 0x2EC], // 从水中跳出时的俯仰角
+
+    // --- 地板与模式设置 ---
+    'CurrentFloor': ['struct', 0x2F0], // 当前地板信息 (FFindFloorResult)
+    'DefaultLandMovementMode': ['byte', 0x388], // 默认陆地移动模式
+    'DefaultWaterMovementMode': ['byte', 0x389], // 默认水上移动模式
+    'GroundMovementMode': ['byte', 0x38A], // 地面移动模式
+
+    // --- 更多布尔标志位 ---
+    'bMaintainHorizontalGroundVelocity': ['bool', 0x38B], // 是否保持水平地面速度
+    'bImpartBaseVelocityX': ['bool', 0x38B], // 是否传递基座X方向速度
+    'bImpartBaseVelocityY': ['bool', 0x38B], // 是否传递基座Y方向速度
+    'bImpartBaseVelocityZ': ['bool', 0x38B], // 是否传递基座Z方向速度
+    'bImpartBaseAngularVelocity': ['bool', 0x38B], // 是否传递基座角速度
+    'bJustTeleported': ['bool', 0x38B], // 是否刚刚被传送
+    'bNetworkUpdateReceived': ['bool', 0x38B], // 是否已收到网络更新
+    'bNetworkMovementModeChanged': ['bool', 0x38B], // 网络移动模式是否已改变
+    'bIgnoreClientMovementErrorChecksAndCorrection': ['bool', 0x38C], // 是否忽略客户端移动错误检查与校正
+    'bServerAcceptClientAuthoritativePosition': ['bool', 0x38C], // 服务器是否接受客户端权威位置
+    'bNotifyApex': ['bool', 0x38C], // 是否在跳跃顶点时通知
+    'bCheatFlying': ['bool', 0x38C], // 是否处于作弊飞行状态
+    'bWantsToCrouch': ['bool', 0x38C], // 是否想要蹲伏
+    'bCrouchMaintainsBaseLocation': ['bool', 0x38C], // 蹲伏时是否保持基座位置
+    'bIgnoreBaseRotation': ['bool', 0x38C], // 是否忽略基座旋转
+    'bFastAttachedMove': ['bool', 0x38C], // 是否快速附加移动
+    'bAlwaysCheckFloor': ['bool', 0x38D], // 是否始终检查地板
+    'bUseFlatBaseForFloorChecks': ['bool', 0x38D], // 地板检测时是否使用平坦基座
+    'bPerformingJumpOff': ['bool', 0x38D], // 是否正在执行跳离动作
+    'bWantsToLeaveNavWalking': ['bool', 0x38D], // 是否想要离开导航行走
+    'bUseRVOAvoidance': ['bool', 0x38D], // 是否使用RVO避障
+    'bRequestedMoveUseAcceleration': ['bool', 0x38D], // 请求的移动是否使用加速度
+    'bIsNavWalkingOnServer': ['bool', 0x38D], // 服务器上是否处于导航行走状态
+    'bWasSimulatingRootMotion': ['bool', 0x38D], // 是否曾模拟根运动
+    'bAllowPhysicsRotationDuringAnimRootMotion': ['bool', 0x38E], // 动画根运动期间是否允许物理旋转
+    'bHasRequestedVelocity': ['bool', 0x38E], // 是否已请求速度
+    'bRequestedMoveWithMaxSpeed': ['bool', 0x38E], // 请求的移动是否使用最大速度
+    'bWasAvoidanceUpdated': ['bool', 0x38E], // 避障信息是否已更新
+    'bUseRVOPostProcess': ['bool', 0x38E], // 是否使用RVO后处理
+    'bDeferUpdateBasedMovement': ['bool', 0x38E], // 是否延迟基于更新的移动
+    'bProjectNavMeshWalking': ['bool', 0x38E], // 是否投影到导航网格行走
+    'bProjectNavMeshOnBothWorldChannels': ['bool', 0x38E], // 是否在两个世界通道上投影导航网格
+    // 0x38F: 填充字节 (padding byte)
+
+    // --- 避障与导航 ---
+    'AvoidanceLockVelocity': ['vector', 0x390], // 避障锁定速度
+    'AvoidanceLockTimer': ['float', 0x39C], // 避障锁定计时器
+    'AvoidanceConsiderationRadius': ['float', 0x3A0], // 避障考虑半径
+    'RequestedVelocity': ['vector', 0x3A4], // 请求的速度
+    'AvoidanceUID': ['int32', 0x3B0], // 避障唯一ID
+    'AvoidanceGroup': ['struct', 0x3B4], // 避障组掩码 (FNavAvoidanceMask)
+    'GroupsToAvoid': ['struct', 0x3B8], // 需要避开的组掩码
+    'GroupsToIgnore': ['struct', 0x3BC], // 需要忽略的组掩码
+    'AvoidanceWeight': ['float', 0x3C0], // 避障权重
+    'PendingLaunchVelocity': ['vector', 0x3C4], // 待发射速度
+    'CachedNavLocation': ['struct', 0x3D0], // 缓存的导航位置 (FNavLocation)
+    'CachedProjectedNavMeshHitResult': ['struct', 0x3E8], // 缓存的投影导航网格命中结果 (FHitResult)
+    'NavMeshProjectionInterval': ['float', 0x474], // 导航网格投影间隔
+    'NavMeshProjectionTimer': ['float', 0x478], // 导航网格投影计时器
+    'NavMeshProjectionInterpSpeed': ['float', 0x47C], // 导航网格投影插值速度
+    'NavMeshProjectionHeightScaleUp': ['float', 0x480], // 向上投影高度缩放
+    'NavMeshProjectionHeightScaleDown': ['float', 0x484], // 向下投影高度缩放
+    'NavWalkingFloorDistTolerance': ['float', 0x488], // 导航行走地板距离容差
+    // 0x48C - 0x48F: 填充字节 (padding bytes)
+
+    // --- 系统组件与数据 ---
+    'PostPhysicsTickFunction': ['struct', 0x490], // 物理后Tick函数 (FCharacterMovementComponentPostPhysicsTickFunction)
+    'ClientPredictionData': ['pointer', 0x4C0], // 客户端预测数据 (FNetworkPredictionData_Client_Character*)
+    'ServerPredictionData': ['pointer', 0x4C8], // 服务器预测数据 (FNetworkPredictionData_Server_Character*)
+    'RandomStream': ['struct', 0x4D0], // 随机流 (FRandomStream)
+    'MinTimeBetweenTimeStampResets': ['float', 0x4D8], // 时间戳重置的最小间隔时间
+    'LastTimeStampResetServerTime': ['float', 0x4DC], // 上次时间戳重置的服务器时间
+    'DefaultNetworkMoveDataContainer': ['struct', 0x4E0], // 默认网络移动数据容器
+    'NetworkMoveDataContainerPtr': ['pointer', 0x5F8], // 网络移动数据容器指针
+    'ServerMoveBitWriter': ['struct', 0x600], // 服务器移动位写入器 (FNetBitWriter)
+    'ServerMoveBitReader': ['struct', 0x6C8], // 服务器移动位读取器 (FNetBitReader)
+    'CurrentNetworkMoveData': ['pointer', 0x788], // 当前网络移动数据 (FCharacterNetworkMoveData*)
+    'DefaultMoveResponseDataContainer': ['struct', 0x790], // 默认移动响应数据容器
+    'MoveResponseDataContainerPtr': ['pointer', 0x7F8], // 移动响应数据容器指针
+    'MoveResponseBitWriter': ['struct', 0x800], // 移动响应位写入器 (FNetBitWriter)
+    'MoveResponseBitReader': ['struct', 0x8C8], // 移动响应位读取器 (FNetBitReader)
+
+    // --- 根运动 (Root Motion) ---
+    'CurrentRootMotion': ['struct', 0x988], // 当前根运动数据 (FRootMotionSourceGroup)
+    'ServerCorrectionRootMotion': ['struct', 0x9C0], // 服务器校正根运动
+    'RootMotionIDMappings': ['array', 0x9F8], // 根运动ID映射表 (TArray)
+    // 0xA88 - 0xA8F: 填充字节 (padding bytes)
+    'RootMotionParams': ['struct', 0xA90], // 根运动参数 (FRootMotionMovementParams)
+    'AnimRootMotionVelocity': ['vector', 0xAD0], // 动画根运动速度
+    // 0xADC - 0xADF: 填充字节 (padding bytes)
+
+    // --- 委托 (Delegates) ---
+    'ProcessRootMotionPreConvertToWorld': ['delegate', 0xAE0], // 根运动转换到世界坐标前的处理委托
+    'ProcessRootMotionPostConvertToWorld': ['delegate', 0xAF0] // 根运动转换到世界坐标后的处理委托
+};
