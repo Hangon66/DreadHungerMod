@@ -24,15 +24,14 @@ Interceptor.replace(ADH_HumanCharacter_TakeDamage, new NativeCallback(
         try {
             //logInfo(`[TakeDamage] 原始伤害: ${damage}`);
             // ===== 读取角色状态 =====
-            //var playerStateTaken = thisPtr.add(0x240).readPointer(); // 被打者 PlayerState
-            //var playerStateCauser = damageCauser.add(0x240).readPointer(); // 造成者 PlayerState
+            var playerStateTaken = thisPtr.add(0x240).readPointer(); // 被打者 PlayerState
+            var playerStateCauser = damageCauser.add(0x240).readPointer(); // 造成者 PlayerState
             //var DamageType = damageEvent.add(0x8).readPointer();
             //var bCausedByWorld = (DamageType.add(0x28).readU8() & 0x01) !== 0;
             //logInfo('bCausedByWorld : ' + bCausedByWorld);
             //logInfo(`[TakeDamage] 被打者: ${playerStateTaken}` + `, 造成者: ${playerStateCauser}`);
             var isThrall1 = 0, isThrall2 = 0;
-            if (bCausedByWorld != 1
-                && !playerStateTaken.isNull() 
+            if (!playerStateTaken.isNull() 
                 && !playerStateCauser.isNull() 
                 && (!playerStateTaken.equals(playerStateCauser)) 
                 && !playerStateCauser.equals(ptr("0xffffffffffffffff"))) {

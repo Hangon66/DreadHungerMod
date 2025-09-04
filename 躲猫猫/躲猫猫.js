@@ -198,7 +198,7 @@ Interceptor.attach(ADH_HumanCharacter_Died_addr, {
                 if(ExplorerRemainingLife <= 0){
                     SendBroadMessage(ADH_GameState, "你们打倒了抓捕者,躲藏者胜利");
                     var timer = setTimeout(function(){
-                        //ADH_GameMode_WarshipEscaped(ADH_GameMode, 1);
+                        ADH_GameMode_WarshipEscaped(ADH_GameMode, 1);
                     },8000);
                 }
             }
@@ -622,7 +622,7 @@ Interceptor.attach(ADH_GameState_OnNewDayStarted_addr, {
 /**
  * 无法实现xxx被夹中增加体型
  */
-var ADH_Character_SnareExpired_addr = base.add(0xd72110);
+var ADH_Character_SnareExpired_addr = base.add(0xd72110);       
 Interceptor.attach(ADH_Character_SnareExpired_addr, {
     onEnter: function (args) {
         this.ADH_HumanCharacter = args[0];
@@ -994,7 +994,9 @@ Interceptor.attach(ADH_PlayerState_ModifyMatchStat_addr, {
             var Count = FPlayerMatchStat.add(0x4).readU32();
             var IsThrall = ADH_PlayerState.add(0x572).readU8();
             var ADH_PlayerController = ADH_PlayerState.add(0xE0).readPointer();
+            if(ADH_PlayerController.isNull())return;
             var ADH_HumanCharacter = ADH_PlayerController.add(0x588).readPointer();
+            if(ADH_HumanCharacter.isNull())return;
             var bIsDoppelganger = ADH_HumanCharacter.add(0x11D2).readU8();
             //logInfo(' ScoreTotal ' + ScoreTotal + ' Count ' + Count);
             //区分好人狼人奖励类型

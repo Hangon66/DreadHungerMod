@@ -212,7 +212,7 @@ var CustomDropTables = {
     ],
     "DT_ShipCoalStorage" : [ //锅炉房储藏箱
         {
-            "Items": [24, 31],
+            "Items": [23, 31],
             "Weight": 100, //权重
             "GuaranteedSpawns": 1, //最小生成的数量
             "MaximumSpawns": 1, //最大生成的数量
