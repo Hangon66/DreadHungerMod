@@ -1,3 +1,5 @@
+var modSwitch = 1;
+if (modSwitch == 1) {
     // 获取模块基址
     var base = Module.findBaseAddress('DreadHunger-Win64-Shipping.exe');
     var YawValue = 0.0;
@@ -23,7 +25,7 @@
     Interceptor.replace(UCharacterMovementComponent_CallServerMovePacked, new NativeCallback(
         function (thisPtr, NewMove, PendingMove,OldMove) {
             try {
-                // 读取thisPtr->00000148处的CharacterOwner指针
+                /* 读奔跑状态bIsSprinting */
                 var characterOwnerOffset = 0x148;
                 var characterOwnerPtr = thisPtr.add(characterOwnerOffset).readPointer();
                 
@@ -34,9 +36,15 @@
                     var bIsSprinting = characterOwnerPtr.add(a54Offset).readS8();
                 }
 
+                /* 读是否收手bEquipped */
+                var UDH_InventoryManagerPtr = characterOwnerPtr.add(0x808).readPointer();
+                var ADH_Inventory = UDH_InventoryManagerPtr.add(0xF8).readPointer();
+                var bEquipped = ADH_Inventory.add(0x530).readU8();
+
+
                 var MovementModeOffset = 0x168;
                 var MovementMode = NewMove.add(MovementModeOffset).readU8();
-                if(bIsSprinting != 1 || MovementMode == 3 || MovementMode == 4 || MovementMode == 6){
+                if(bEquipped == 0 && (bIsSprinting != 1 || MovementMode == 3 || MovementMode == 4 || MovementMode == 6)){
                     //反向偏航角
                     var SavedControlRotationOffset = 0x19C;
                     var SavedControlRotationPtr = NewMove.add(SavedControlRotationOffset+0x4);
@@ -60,3 +68,4 @@
         'void',                    // 返回类型
         ['pointer', 'pointer', 'pointer', 'pointer']  // 参数类型: this, NewMove, PendingMove, OldMove
     ));
+}
