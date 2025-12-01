@@ -39,8 +39,9 @@ if (modSwitch == 1) {
                 /* 读是否收手bEquipped */
                 var UDH_InventoryManagerPtr = characterOwnerPtr.add(0x808).readPointer();
                 var ADH_Inventory = UDH_InventoryManagerPtr.add(0xF8).readPointer();
-                var bEquipped = ADH_Inventory.add(0x530).readU8();
-
+                if(ADH_Inventory != 0){
+                    bEquipped = ADH_Inventory.add(0x530).readU8();
+                }
 
                 var MovementModeOffset = 0x168;
                 var MovementMode = NewMove.add(MovementModeOffset).readU8();
