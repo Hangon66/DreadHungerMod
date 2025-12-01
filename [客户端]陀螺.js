@@ -28,7 +28,7 @@ if (modSwitch == 1) {
                 /* 读奔跑状态bIsSprinting */
                 var characterOwnerOffset = 0x148;
                 var characterOwnerPtr = thisPtr.add(characterOwnerOffset).readPointer();
-                
+                var bEquipped = 1;
                 // 检查指针是否有效
                 if (!characterOwnerPtr.isNull()) {
                     // 读取CharacterOwner偏移0xA54处的int8值
