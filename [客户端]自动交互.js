@@ -27,7 +27,8 @@ var autoCraftList = [
     'CR_Searching',//普通搜索
     'CR_UnlockCaptainsTrunk',//船长室宝箱
     'CR_MineCoal',//煤车
-    'CR_SearchLifeBoat'//小艇
+    'CR_SearchLifeBoat',//小艇
+	'CR_HullPatch'//船洞
 ];
 
 function newFString(Length) {
