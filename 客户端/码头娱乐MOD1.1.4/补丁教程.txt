@@ -1,0 +1,10 @@
+1.踏空跳和开启码头骨刀补丁可能导致进服务器时崩溃，不建议开启
+
+2.js补丁加载方式
+需要什么补丁就把补丁拖到DreadHunger\Binaries\Win64\Patches里即可
+若没有此文件夹，就到TSG开服器中下载一个视角抖动消除补丁，然后该文件夹就会出现
+
+3.pak和sig补丁加载方式
+将对应pak和sig文件放入此路径即可DreadHunger\DreadHunger\Content\Paks
+
+

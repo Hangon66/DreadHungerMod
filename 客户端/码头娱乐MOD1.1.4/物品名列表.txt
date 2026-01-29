@@ -1,0 +1,148 @@
+物品掉落类
+"/Game/Blueprints/Inventory/Flintlock/BP_Flintlock_Pickup.BP_Flintlock_Pickup_C"小枪	
+"/Game/Blueprints/Inventory/Musket/BP_Musket_Pickup.BP_Musket_Pickup_C"大枪
+"/Game/Blueprints/Inventory/Sword/BP_Sword_Pickup.BP_Sword_Pickup_C"兵刀	
+"/Game/Blueprints/Inventory/Lantern/BP_Lantern_Pickup.BP_Lantern_Pickup_C"灯	
+"/Game/Blueprints/Inventory/Bow/BP_Bow_Pickup.BP_Bow_Pickup_C"弩	
+"/Game/Blueprints/Inventory/Flint/BP_GunParts_Pickup.BP_GunParts_Pickup_C"檐帽零件	
+"/Game/Blueprints/Inventory/Flintlock/BP_Flintlock_Ammo_Pickup.BP_Flintlock_Ammo_Pickup_C"子弹	
+"/Game/Blueprints/Inventory/Bow/BP_Arrows_Pickup.BP_Arrows_Pickup_C"箭矢	
+"/Game/Blueprints/Inventory/WoodAxe/BP_WoodAxe_Pickup.BP_WoodAxe_Pickup_C"斧头	
+"/Game/Blueprints/Inventory/IceAxe/BP_IceAxe_Pickup.BP_IceAxe_Pickup_C"冰斧	
+"/Game/Blueprints/Inventory/Cleaver/BP_Cleaver_Pickup.BP_Cleaver_Pickup_C"菜刀	
+"/Game/Blueprints/Inventory/Shovel/BP_Shovel_Pickup.BP_Shovel_Pickup_C"镐子	
+"/Game/Blueprints/Inventory/Stick/BP_Stick_Pickup.BP_Stick_Pickup_C"木板	
+"/Game/Blueprints/Inventory/Rock/BP_Rock_Pickup.BP_Rock_Pickup_C"石头	
+"/Game/Blueprints/Inventory/Metals/BP_IronIngot_Pickup.BP_IronIngot_Pickup_C"锭铁	
+"/Game/Blueprints/Inventory/Metals/BP_Nails_Pickup.BP_Nails_Pickup_C"钉子	
+"/Game/Blueprints/Inventory/Metals/BP_LeadIngot_Pickup.BP_LeadIngot_Pickup_C"铅锭	
+"/Game/Blueprints/Inventory/Coal/BP_Coal_Pickup.BP_Coal_Pickup_C"煤炭	
+"/Game/Blueprints/Inventory/Flintlock/BP_Gunpowder_Pickup.BP_Gunpowder_Pickup_C"火药	
+"/Game/Blueprints/Inventory/AnimalParts/BP_Sinew_Pickup.BP_Sinew_Pickup_C"腱子	
+"/Game/Blueprints/Inventory/AnimalParts/BP_WolfPelt_Pickup.BP_WolfPelt_Pickup_C"动物皮革	
+"/Game/Blueprints/Inventory/Tea/BP_Herbs_Pickup.BP_Herbs_Pickup_C"草药	
+"/Game/Blueprints/Inventory/Syringe/BP_Syringe_Pickup.BP_Syringe_Pickup_C"针	
+"/Game/Blueprints/Inventory/Poison/BP_Antidote_Pickup.BP_Antidote_Pickup_C"解毒剂	
+"/Game/Blueprints/Inventory/Syringe/BP_Pickup_Laudanum.BP_Pickup_Laudanum_C"鸦片酊	
+"/Game/Blueprints/Inventory/Meat/BP_AnimalMeat_Pickup.BP_AnimalMeat_Pickup_C"生肉	
+"/Game/Blueprints/Inventory/Meat/BP_CookedMeat_Pickup.BP_CookedMeat_Pickup_C"熟肉	
+"/Game/Blueprints/Inventory/Meat/BP_HumanMeat_Pickup.BP_HumanMeat_Pickup_C"人肉	
+"/Game/Blueprints/Inventory/Meat/BP_BoneClub_Pickup.BP_BoneClub_Pickup_C"骨棒	
+"/Game/Blueprints/Inventory/AnimalParts/BP_Blubber_Pickup.BP_Blubber_Pickup_C"脂肪	
+"/Game/Blueprints/Inventory/Meat/BP_Stew_Pickup.BP_Stew_Pickup_C"肉汤	
+"/Game/Blueprints/Inventory/Tea/BP_Tea_Pickup.BP_Tea_Pickup_C"茶	
+"/Game/Blueprints/Inventory/Metals/BP_Whetstone_Pickup.BP_Whetstone_Pickup_C"磨刀石	
+"/Game/Blueprints/Inventory/BearTrap/BP_BearTrap_Pickup.BP_BearTrap_Pickup_C"钢夹	
+"/Game/Blueprints/Inventory/Spyglass/BP_Spyglass_Pickup.BP_Spyglass_Pickup_C"望远镜	
+"/Game/Blueprints/Inventory/Powderkeg/BP_CoalBarrel_Pickup.BP_CoalBarrel_Pickup_C"煤油桶	
+"/Game/Blueprints/Inventory/Powderkeg/BP_Powderkeg_Pickup.BP_Powderkeg_Pickup_C"火药桶	
+"/Game/Blueprints/Inventory/Poison/BP_Poison_Pickup.BP_Poison_Pickup_C"毒药	
+"/Game/Blueprints/Environment/Nitro/BP_Nitro_Pickup.BP_Nitro_Pickup_C"硝化甘油	
+"/Game/Blueprints/Inventory/LockPick/BP_SkeletonKey_Pickup.BP_SkeletonKey_Pickup_C"万能钥匙	
+"/Game/Blueprints/Inventory/LockPick/BP_CaptainsKey_Pickup.BP_CaptainsKey_Pickup_C"船长室钥匙	
+"/Game/Blueprints/Inventory/Totem/BP_BoneDagger_Pickup.BP_BoneDagger_Pickup_C"高骨匕首	
+
+
+船组件类：
+"/Game/Blueprints/Ship/BP_WarshipHelm.BP_WarshipHelm_C"船方向盘	
+"/Game/Blueprints/Ship/BP_HangingLamp.BP_HangingLamp_C"挂灯	
+"/Game/Blueprints/Ship/BP_HangingLantern.BP_HangingLantern_C"挂灯蓝图	
+"/Game/Environment/Blueprints/Doors/BP_CrewDoor_Mirrored.BP_CrewDoor_Mirrored_C"船门	
+"/Game/Environment/Blueprints/Doors/BP_ArmoryDoor.BP_ArmoryDoor_C"兵舱门	
+"/Game/Environment/Blueprints/Doors/BP_Door_Snow.BP_Door_Snow_C"雪地门	
+"/Game/Environment/Blueprints/Doors/BP_FancyDoor.BP_FancyDoor_C"精致门	
+"/Game/Blueprints/Ship/BP_SkyLight.BP_SkyLight_C"天窗灯	
+"/Game/Blueprints/Ship/BP_HangingLantern_Exterior.BP_HangingLantern_Exterior_C"外部挂灯	
+"/Game/Blueprints/Ship/BP_HangingLantern_Exterior_C.BP_HangingLantern_Exterior_C_C"外部挂灯
+"/Game/Blueprints/Game/Crafting/BP_Stove_Fireplace.BP_Stove_Fireplace_C"灶台壁炉
+"/Game/Blueprints/Ship/BP_Bell.BP_Bell_C"船钟
+"/Game/Blueprints/Ship/BP_HangingLamp_Exterior.BP_HangingLamp_Exterior_C"外部挂灯	
+"/Game/Blueprints/Environment/ShipContainers/BP_CharacterWardrobeEmpty.BP_CharacterWardrobeEmpty_C"衣柜	
+"/Game/Blueprints/Game/Lobby/BP_BrigPlayerStart.BP_BrigPlayerStart_C"黑牢	
+"/Game/Blueprints/Game/Lobby/BP_BrigPlayerStart_02.BP_BrigPlayerStart_02_C"黑牢2	
+"/Game/Environment/Blueprints/Doors/BP_BrigDoor.BP_BrigDoor_C"黑门1	
+"/Game/Environment/Blueprints/Doors/BP_BrigDoor_02.BP_BrigDoor_02_C"黑门2	
+"/Game/Blueprints/Ship/BP_Rigging.BP_Rigging_C"短梯子
+"/Game/Blueprints/Ship/BP_CrowsNestRigging.BP_CrowsNestRigging_C"长梯子	
+"/Game/Blueprints/Environment/BP_ReviveBed_CrewHammock_Ship.BP_ReviveBed_CrewHammock_Ship_C"船员吊床
+"/Game/Blueprints/Environment/BP_ReviveBed_CrewHammock_ShipB.BP_ReviveBed_CrewHammock_ShipB_C"船员吊床	
+"/Game/Blueprints/Game/Crafting/BP_WorkBench.BP_Workbench_C"工作台	
+"/Game/Blueprints/Game/Crafting/BP_Stove.BP_Stove_C"灶台	
+"/Game/Blueprints/Environment/BP_ReviveBed_Captain.BP_ReviveBed_Captain_C"船长吊床	
+"/Game/Blueprints/Game/Lobby/BP_MapTable.BP_MapTable_C"	//地图桌
+"/Game/Blueprints/Ship/BP_Warship.BP_Warship_C"	//船
+
+
+冰山类：
+"/Game/Blueprints/Environment/DestructibleShip/BP_DestructibleIceWall.BP_DestructibleIceWall_C"冰山	
+"/Game/Environment/IceWall/BP_IceWall.BP_IceWall_C"小冰山	
+"/Game/Environment/IceWall/BP_IceWall_2.BP_IceWall_2_C"小冰山2	
+"/Game/Environment/IceWall/BP_IceWall_3.BP_IceWall_3_C"小冰山3	
+"/Game/Environment/BP_PackIceSheet.BP_PackIceSheet_C"冰面	
+"/Game/Maps/NorthWestPassage/Departure/BP_Totem_Wendigo.BP_Totem_Wendigo_C"温迪戈冰雕	
+
+生物类：
+"/Game/Blueprints/AI/Predators/BP_Predator_Bear.BP_Predator_Bear_C"	北极熊
+"/Game/Blueprints/AI/Prey/BP_Prey_Seal.BP_Prey_Seal_C"	海豹
+"/Game/Blueprints/AI/Prey/BP_Prey_Rabbit.BP_Prey_Rabbit_C"	北极兔
+"/Game/Blueprints/AI/Predators/BP_Predator_Wolf.BP_Predator_Wolf_C"	北极狼
+"/Game/Blueprints/AI/Cannibal/BP_Cannibal.BP_Cannibal_C"	食人族
+"/Game/Blueprints/AI/Cannibal/BP_Cannibal_Crawler.BP_Cannibal_Crawler_C"	食人族2
+"/Game/Blueprints/AI/Cannibal/BP_Cannibal_Shambler.BP_Cannibal_Shambler_C"	食人族3
+
+
+存储类：
+"/Game/Blueprints/Environment/ShipContainers/BP_EmptyTrunkStorage.BP_EmptyTrunkStorage_1_C"	空箱子储物
+"/Game/Blueprints/Environment/BP_StorageTrunk_Captain.BP_StorageTrunk_Captain_C"	船长储物箱
+"/Game/Blueprints/Environment/BP_StorageTrunk.BP_StorageTrunk_C"	船内储藏室
+"/Game/Blueprints/Environment/BP_StorageTrunk_Ammo.BP_StorageTrunk_Ammo_C"	弹药库
+"/Game/Blueprints/Environment/StrongBox/BP_GunLocker.BP_GunLocker_C"	枪柜
+"/Game/Blueprints/Environment/StrongBox/BP_StrongBox.BP_StrongBox_C"	保险箱
+"/Game/Blueprints/Environment/StrongBox/BP_GunCabinet.BP_GunCabinet_C"	枪柜
+"/Game/Blueprints/Environment/ShipContainers/BP_CoalStorage.BP_CoalStorage_C"	煤储存箱
+"/Game/Blueprints/Environment/BP_CoalStorage_Sled.BP_CoalStorage_Sled_C"	小煤车
+"/Game/Blueprints/Environment/BP_CoalStorage_Sled_V2.BP_CoalStorage_Sled_V2_C"	大煤车
+"/Game/Blueprints/Environment/EnvironmentContianers/BP_StorageTrunk_Supplies_High.BP_StorageTrunk_Supplies_High_C"	物资箱
+"/Game/Blueprints/Environment/EnvironmentContianers/BP_StorageTrunk_Supplies_Low.BP_StorageTrunk_Supplies_Low_C"	物资箱
+"/Game/Blueprints/Environment/EnvironmentContianers/BP_StorageTrunk_BackPack.BP_StorageTrunk_BackPack_C"	背包
+"/Game/Blueprints/Environment/EnvironmentContianers/BP_StorageTrunk_Medical.BP_StorageTrunk_Medical_C"	医疗包
+"/Game/Blueprints/Environment/EnvironmentContianers/BP_CoveredCrate_Storage_Empty.BP_CoveredCrate_Storage_Empty_C"	隐藏箱空储物
+"/Game/Blueprints/Environment/EnvironmentContianers/BP_CoveredCrate_Storage_Low.BP_CoveredCrate_Storage_Low_C"	小隐藏箱储物
+"/Game/Blueprints/Environment/EnvironmentContianers/BP_CoveredCrate_Storage_High.BP_CoveredCrate_Storage_High_C"	大隐藏箱储物
+"/Game/Blueprints/Environment/EnvironmentContianers/BP_CoveredCrate_Storage_Nitro.BP_CoveredCrate_Storage_Nitro_C"	硝化石油储存箱
+
+骨头&图腾
+"/Game/Blueprints/Game/Totems/BP_Totem.BP_Totem_C"	图腾(只能看,无效果)
+"/Game/Blueprints/Environment/FoodStorage/ClothedSkeletons/BP_OfficerSkeleton.BP_OfficerSkeleton_C"	兵官骷髅
+"/Game/Blueprints/Environment/FoodStorage/BP_FrozenSkeleton.BP_FrozenSkeleton_C"	坐着的骷髅
+"/Game/Blueprints/Environment/FoodStorage/ClothedSkeletons/BP_Skeleton_Clothed_01.BP_Skeleton_Clothed_01_C"	穿衣骷髅1
+"/Game/Blueprints/Environment/FoodStorage/ClothedSkeletons/BP_Skeleton_Clothed_02.BP_Skeleton_Clothed_02_C"	穿衣骷髅2
+"/Game/Blueprints/Environment/FoodStorage/ClothedSkeletons/BP_Skeleton_Clothed_03.BP_Skeleton_Clothed_03_C"	穿衣骷髅3
+"/Game/Blueprints/Environment/FoodStorage/NakedSkeletons/BP_Skeleton_Naked_03_Snow.BP_Skeleton_Naked_03_Snow_C"	坐着的骷髅
+"/Game/Blueprints/Environment/FoodStorage/NakedSkeletons/BP_Skeleton_Naked_04.BP_Skeleton_Naked_04_C"	躺着的骷髅
+"/Game/Blueprints/Environment/FoodStorage/NakedSkeletons/BP_Skeleton_Naked_04_Snow.BP_Skeleton_Naked_04_Snow_C"	带雪躺着的骷髅
+"/Game/Blueprints/Environment/FoodStorage/BP_FrozenCorpse.BP_FrozenCorpse_C"	坐着的尸体
+"/Game/Blueprints/Environment/FoodStorage/Flesh/BP_Cannibal_Storage_1.BP_Cannibal_Storage_1_C"	躺着的尸体
+
+直接伤害类：
+"/Game/Blueprints/Game/BP_Explosion_Nitro.BP_Explosion_Nitro_C"	硝化油伤害
+"/Game/Blueprints/Game/BP_ExplosionActor.BP_ExplosionActor_C"	爆炸伤害
+"/Game/Blueprints/Game/BP_Explosion_Gunpowder.BP_Explosion_Gunpowder_C"	火药桶伤害
+"/Game/Blueprints/Game/BP_Explosion_Gunpowder_OffShip.BP_Explosion_Gunpowder_OffShip_C"	船外火药桶伤害
+
+木板箱类：
+"/Game/Blueprints/Environment/BP_Destructible_Storage_Crate_01.BP_Destructible_Storage_Crate_01_C"	木板箱
+"/Game/Blueprints/Environment/BP_Destructible_Storage_Sledge_01.BP_Destructible_Storage_Sledge_01_C"	雪橇木板箱
+"/Game/Blueprints/Environment/BP_Destructible_Storage_Cross.BP_Destructible_Storage_Cross_C"	木板十字架
+
+人物类：
+"/Game/Blueprints/AI/Human/BP_NPC_Hunter.BP_NPC_Hunter_C"	AI猎人
+"/Game/Blueprints/Player/BP_HumanCharacter.BP_HumanCharacter_C" 枪手
+
+新版本物品：
+"/Game/Mods/Inventory/DarkSword/BP_DarkSword_Pickup.BP_DarkSword_Pickup_C"	//黑暗之剑
+"/Game/Mods/Environment/RebornStatue/BP_RebornStatue.BP_RebornStatue_C"	//祭坛
+"/Game/Mods/TotemSpells/Appearing/BP_Wendigo.BP_Wendigo_C"	//温迪戈
+"/Game/Mods/Environment/NewWorkbench/BP_NewWorkbench.BP_NewWorkbench_C"	//武器台
+"/Game/Mods/Maps/Archipelago/Blueprints/Merchant/BP_Lighthouse_Merchant.BP_Lighthouse_Merchant_C"	//交易导航
+
