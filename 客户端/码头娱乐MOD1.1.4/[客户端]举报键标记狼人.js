@@ -11,8 +11,7 @@ var FWeakObjectPtr_Get = new NativeFunction(base.add(0x13e6cf0), 'pointer', ['po
 // 	f.write('[Patches] ' + Info + '\n');
 // 	f.close();
 // }
-
-var UDH_LobbySlotWidget = null;
+var UDH_LobbySlotWidget;
 var UDH_LobbySlotWidget_OnLobbyButtonClicked = base.add(0x10219e0)
 Interceptor.attach(UDH_LobbySlotWidget_OnLobbyButtonClicked, {
     onEnter : function(args){
@@ -21,22 +20,35 @@ Interceptor.attach(UDH_LobbySlotWidget_OnLobbyButtonClicked, {
     onLeave : function(){}
 });
 
+var UDH_LobbySlotWidget_UpdateAvatarImageAddr = base.add(0x1031060)
+Interceptor.attach(UDH_LobbySlotWidget_UpdateAvatarImageAddr, {
+    onEnter : function(args){
+        UDH_LobbySlotWidget = args[0];
+    }, 
+    onLeave : function(){
+        var ADH_PlayerState = FWeakObjectPtr_Get(UDH_LobbySlotWidget.add(0x318));
+        var flag = ADH_PlayerState.add(0x64A).readU8();
+        if(flag == 1){
+                var UDH_PlayerRoleData = ADH_PlayerState.add(0x590).readPointer();
+                var resultPtr = Memory.alloc(0x40);
+                var p_Preset = FDH_RoleIconPreset_ThrallInverted(resultPtr);
+                var RoleIcon = UDH_ScoreboardUtility_GetRoleIcon(UDH_PlayerRoleData, p_Preset);
+                UImage_SetBrushResourceObject(UDH_LobbySlotWidget.add(0x2C0).readPointer(), RoleIcon);
+        }
+    }
+});
+
 var UDH_PlayerContextMenuWidget_OnReportButtonClicked = base.add(0x10259f0)
 Interceptor.replace(UDH_PlayerContextMenuWidget_OnReportButtonClicked, new NativeCallback(function (thisPtr, UDH_ButtonWidget){
-
-        var flag = UDH_LobbySlotWidget.add(0x269).readU8();
         var ADH_PlayerState = FWeakObjectPtr_Get(UDH_LobbySlotWidget.add(0x318));
         var UDH_PlayerRoleData = ADH_PlayerState.add(0x590).readPointer();
+        var flag = ADH_PlayerState.add(0x64A).readU8();
         if(flag == 0){
-            var resultPtr = Memory.alloc(0x40);
-            var p_Preset = FDH_RoleIconPreset_ThrallInverted(resultPtr);
-            var RoleIcon = UDH_ScoreboardUtility_GetRoleIcon(UDH_PlayerRoleData, p_Preset);
-            UImage_SetBrushResourceObject(UDH_LobbySlotWidget.add(0x2C0).readPointer(), RoleIcon);
-            UDH_LobbySlotWidget.add(0x269).writeU8(1);
+            ADH_PlayerState.add(0x64A).writeU8(1);
         }else{
-            UDH_LobbySlotWidget_UpdateAvatarImage(UDH_LobbySlotWidget, UDH_PlayerRoleData);
-            UDH_LobbySlotWidget.add(0x269).writeU8(0);
+            ADH_PlayerState.add(0x64A).writeU8(0);
         }
+        UDH_LobbySlotWidget_UpdateAvatarImage(UDH_LobbySlotWidget, UDH_PlayerRoleData);
     },
         'void',                    // 返回类型
         ['pointer', 'pointer']  // 参数类型: 

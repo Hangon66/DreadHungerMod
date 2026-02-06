@@ -3,11 +3,11 @@ var Switch = 1;//开关，1开启，0关闭
 if(Switch == 1){
 	var base = Module.findBaseAddress('DreadHunger-Win64-Shipping.exe');
 
-	function logInfo(Info) {
-		var f = new File('output.log', 'a');
-		f.write('[Patches] ' + Info + '\n');
-		f.close();
-	}
+	// function logInfo(Info) {
+	// 	var f = new File('output.log', 'a');
+	// 	f.write('[Patches] ' + Info + '\n');
+	// 	f.close();
+	// }
 
 	var UDH_CraftingRecipeWidget_OnCraftableChanged =  base.add(0xfa9450);
 	var UDH_CraftingRecipeWidget_Craft = new NativeFunction(base.add(0xf8f390), 'void', ['pointer'], 'win64');
@@ -44,7 +44,6 @@ if(Switch == 1){
 		return NameBuffer.readPointer().readUtf16String();
 	};
 
-	logInfo('UDH_CraftingComponent::CanCraft');
 	Interceptor.attach(UDH_CraftingRecipeWidget_OnCraftableChanged, {
 		onEnter: function(args) {
 			this.Context = args[0];
