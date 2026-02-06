@@ -23,7 +23,6 @@ Interceptor.attach(UDH_LobbySlotWidget_OnLobbyButtonClicked, {
 var UDH_LobbySlotWidget_UpdateAvatarImageAddr = base.add(0x1031060)
 Interceptor.attach(UDH_LobbySlotWidget_UpdateAvatarImageAddr, {
     onEnter : function(args){
-        UDH_LobbySlotWidget = args[0];
     }, 
     onLeave : function(){
         var ADH_PlayerState = FWeakObjectPtr_Get(UDH_LobbySlotWidget.add(0x318));
