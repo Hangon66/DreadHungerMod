@@ -11,6 +11,26 @@ var FWeakObjectPtr_Get = new NativeFunction(base.add(0x13e6cf0), 'pointer', ['po
 // 	f.write('[Patches] ' + Info + '\n');
 // 	f.close();
 // }
+
+var UDH_LobbySlotWidget_UpdateAvatarImageAddr = base.add(0x1031060)
+Interceptor.attach(UDH_LobbySlotWidget_UpdateAvatarImageAddr, {
+    onEnter : function(args){
+        this.UDH_LobbySlotWidget1 = args[0];
+    }, 
+    onLeave : function(){
+        var UDH_LobbySlotWidget1 = this.UDH_LobbySlotWidget1;
+        var ADH_PlayerState = FWeakObjectPtr_Get(UDH_LobbySlotWidget1.add(0x318));
+        var flag = ADH_PlayerState.add(0x64A).readU8();
+        if(flag == 1){
+                var UDH_PlayerRoleData = ADH_PlayerState.add(0x590).readPointer();
+                var resultPtr = Memory.alloc(0x40);
+                var p_Preset = FDH_RoleIconPreset_ThrallInverted(resultPtr);
+                var RoleIcon = UDH_ScoreboardUtility_GetRoleIcon(UDH_PlayerRoleData, p_Preset);
+                UImage_SetBrushResourceObject(UDH_LobbySlotWidget1.add(0x2C0).readPointer(), RoleIcon);
+        }
+    }
+});
+
 var UDH_LobbySlotWidget;
 var UDH_LobbySlotWidget_OnLobbyButtonClicked = base.add(0x10219e0)
 Interceptor.attach(UDH_LobbySlotWidget_OnLobbyButtonClicked, {
@@ -18,23 +38,6 @@ Interceptor.attach(UDH_LobbySlotWidget_OnLobbyButtonClicked, {
         UDH_LobbySlotWidget = args[0];
     }, 
     onLeave : function(){}
-});
-
-var UDH_LobbySlotWidget_UpdateAvatarImageAddr = base.add(0x1031060)
-Interceptor.attach(UDH_LobbySlotWidget_UpdateAvatarImageAddr, {
-    onEnter : function(args){
-    }, 
-    onLeave : function(){
-        var ADH_PlayerState = FWeakObjectPtr_Get(UDH_LobbySlotWidget.add(0x318));
-        var flag = ADH_PlayerState.add(0x64A).readU8();
-        if(flag == 1){
-                var UDH_PlayerRoleData = ADH_PlayerState.add(0x590).readPointer();
-                var resultPtr = Memory.alloc(0x40);
-                var p_Preset = FDH_RoleIconPreset_ThrallInverted(resultPtr);
-                var RoleIcon = UDH_ScoreboardUtility_GetRoleIcon(UDH_PlayerRoleData, p_Preset);
-                UImage_SetBrushResourceObject(UDH_LobbySlotWidget.add(0x2C0).readPointer(), RoleIcon);
-        }
-    }
 });
 
 var UDH_PlayerContextMenuWidget_OnReportButtonClicked = base.add(0x10259f0)
