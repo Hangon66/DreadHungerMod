@@ -13,18 +13,33 @@ function logInfo(Info) {
 
 // 是否允许同一角色被多名玩家重复选择
 // true  = 角色可重复（多人可选同一角色）
-// false = 角色不可重复（走游戏原始 IsRoleTaken 逻辑）
+// false = 角色不可重复（JS层去重 + IsRoleTaken 双重保险）
 var ALLOW_DUPLICATE_ROLES = false;
+
+// ---------------------------------------------------------------
+// 已分配角色集合（JS层去重，防止并发分配时 SelectedRole 尚未写入导致重复）
+// key: roleData 指针字符串，value: true
+// 每局游戏开始时应保持为空（随游戏进程自动填充）
+// ---------------------------------------------------------------
+var assignedRoles = {};
 
 // ---------------------------------------------------------------
 // NativeFunction 声明
 // SetPlayerRole(ADH_PlayerState*, UDH_PlayerRoleData*, bool)
+// IsRoleTaken(UObject* Context, UDH_PlayerRoleData* Role, ADH_PlayerState* QueryingPlayer) -> bool
 // ---------------------------------------------------------------
 var SetPlayerRole_addr = base.add(0xe4f390);
 var SetPlayerRole = new NativeFunction(
     SetPlayerRole_addr,
     'void',
     ['pointer', 'pointer', 'int32'],
+    'win64'
+);
+
+var IsRoleTaken_func = new NativeFunction(
+    base.add(0xe93a70),
+    'uint8',
+    ['pointer', 'pointer', 'pointer'],
     'win64'
 );
 
@@ -54,10 +69,14 @@ function getGameInstance() {
     return gi.isNull() ? null : gi;
 }
 
-function getRandomRoleData() {
+// getRandomRoleData(dhPlayerState):
+//   ALLOW_DUPLICATE_ROLES=true  → 纯随机选一个角色
+//   ALLOW_DUPLICATE_ROLES=false → JS层assignedRoles去重 + IsRoleTaken 双重过滤
+//                                 防止多人并发加入时 SelectedRole 尚未写入导致重复
+function getRandomRoleData(dhPlayerState) {
     var gi = getGameInstance();
     if (!gi) {
-        // logInfo("警告：无法获取 GameInstance");
+        logInfo("警告：无法获取 GameInstance");
         return null;
     }
     // UDH_GameInstance.PlayerRoleList 偏移 0x3B8
@@ -66,13 +85,48 @@ function getRandomRoleData() {
     var dataPtr = listPtr.readPointer();
     var count   = listPtr.add(8).readInt();
     if (count <= 0 || dataPtr.isNull()) {
-        // logInfo("警告：PlayerRoleList 为空，count=" + count);
+        logInfo("警告：PlayerRoleList 为空，count=" + count);
         return null;
     }
-    var idx      = Math.floor(Math.random() * count);
-    var roleData = dataPtr.add(idx * 8).readPointer();
-    // logInfo("随机选择角色 index=" + idx + "/" + count + " ptr=" + roleData);
-    return roleData;
+
+    if (ALLOW_DUPLICATE_ROLES || !dhPlayerState || dhPlayerState.isNull()) {
+        // 允许重复：纯随机
+        var idx = Math.floor(Math.random() * count);
+        return dataPtr.add(idx * 8).readPointer();
+    }
+
+    // 不允许重复：JS层去重（assignedRoles）+ IsRoleTaken 双重过滤
+    var available = [];
+    for (var i = 0; i < count; i++) {
+        var roleData = dataPtr.add(i * 8).readPointer();
+        if (roleData.isNull()) continue;
+
+        // 第一层：JS层去重（防并发：SelectedRole 可能尚未写入内存）
+        var roleKey = roleData.toString();
+        if (assignedRoles[roleKey]) continue;
+
+        // 第二层：调用 IsRoleTaken 确认游戏内存中是否已被占用
+        try {
+            var taken = IsRoleTaken_func(gi, roleData, dhPlayerState);
+            if (!taken) {
+                available.push(roleData);
+            }
+        } catch(e) {
+            logInfo("IsRoleTaken 检查异常 index=" + i + ": " + e);
+            available.push(roleData); // 检查失败时保守加入可用列表
+        }
+    }
+
+    if (available.length === 0) {
+        // 所有角色都被占用（玩家数超过角色数），回退到纯随机
+        // logInfo('警告：所有角色已被占用，回退为纯随机分配');
+        var fallbackIdx = Math.floor(Math.random() * count);
+        return dataPtr.add(fallbackIdx * 8).readPointer();
+    }
+
+    var selectedIdx = Math.floor(Math.random() * available.length);
+    logInfo("从 " + available.length + " 个可用角色中随机选择 index=" + selectedIdx);
+    return available[selectedIdx];
 }
 
 // ---------------------------------------------------------------
@@ -113,12 +167,12 @@ Interceptor.replace(base.add(0xd995a0), new NativeCallback(function(gameMode, ne
             var val = playerStateRaw.add(0x270).readU32();
             hasUniqueId = val !== 0;
         } catch(e) {
-            // logInfo("读取 UniqueId 异常: " + e);
+            logInfo("读取 UniqueId 异常: " + e);
         }
     }
 
     if (hasUniqueId) {
-        // logInfo("重连玩家，走原始逻辑");
+        logInfo("重连玩家，走原始逻辑");
         original_ADHGameMode_HandleStarting(gameMode, newPlayer);
         return;
     }
@@ -126,22 +180,26 @@ Interceptor.replace(base.add(0xd995a0), new NativeCallback(function(gameMode, ne
     // 新玩家：随机分配角色
     var dhPlayerState = newPlayer.add(0x658).readPointer();
     if (dhPlayerState.isNull()) {
-        // logInfo("警告：DHPlayerState 为空，回退原始逻辑");
+        logInfo("警告：DHPlayerState 为空，回退原始逻辑");
         original_ADHGameMode_HandleStarting(gameMode, newPlayer);
         return;
     }
 
     try {
-        var roleData = getRandomRoleData();
+        var roleData = getRandomRoleData(dhPlayerState);
         if (!roleData) {
-            // logInfo("警告：无角色数据，回退原始逻辑");
+            logInfo("警告：无角色数据，回退原始逻辑");
             original_ADHGameMode_HandleStarting(gameMode, newPlayer);
             return;
         }
         SetPlayerRole(dhPlayerState, roleData, 1);
-        // logInfo("已自动随机分配角色，跳过弹窗");
+        // JS层记录已分配角色，防止并发时重复分配
+        if (!ALLOW_DUPLICATE_ROLES) {
+            assignedRoles[roleData.toString()] = true;
+        }
+        logInfo("已自动随机分配角色，跳过弹窗");
     } catch(e) {
-        // logInfo("分配角色异常: " + e + "，回退原始逻辑");
+        logInfo("分配角色异常: " + e + "，回退原始逻辑");
         original_ADHGameMode_HandleStarting(gameMode, newPlayer);
         return;
     }
