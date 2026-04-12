@@ -2,9 +2,9 @@
 
 // 日志函数
 function logInfo(Info) {
-    var f = new File('output.log', 'a');
-    f.write('[AutoRole] ' + Info + '\n');
-    f.close();
+    // var f = new File('output.log', 'a');
+    // f.write('[AutoRole] ' + Info + '\n');
+    // f.close();
 }
 
 // =====================================================================
@@ -192,11 +192,11 @@ Interceptor.replace(base.add(0xd995a0), new NativeCallback(function(gameMode, ne
             original_ADHGameMode_HandleStarting(gameMode, newPlayer);
             return;
         }
-        SetPlayerRole(dhPlayerState, roleData, 1);
-        // JS层记录已分配角色，防止并发时重复分配
+        // JS层先占位，防止并发时其他玩家选到同一角色
         if (!ALLOW_DUPLICATE_ROLES) {
             assignedRoles[roleData.toString()] = true;
         }
+        SetPlayerRole(dhPlayerState, roleData, 1);
         logInfo("已自动随机分配角色，跳过弹窗");
     } catch(e) {
         logInfo("分配角色异常: " + e + "，回退原始逻辑");
