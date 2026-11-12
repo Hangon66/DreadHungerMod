@@ -222,11 +222,20 @@ if(MSwitch && MapMod){
 if(MSwitch && OnlyJump){
 	var IsFloat = base.add(0x2DBD4DF);
 
+	// 本地玩家对象链：全局 base+0x4C70908 -> readPointer(+0x0) -> +0x20 得到本地玩家对象；AActor::Role 偏移 0xF0，ROLE_Authority=3
+	// 逐级判空 + try/catch，避免未进对局/加载期空指针 readPointer 抛异常（原写法直接链式解引用有此风险）
+	function isLocalAuthority() {
+		try {
+			var a = base.add(0x4C70908).readPointer(); if (a.isNull()) return false; // 链起点全局
+			var b = a.readPointer();                  if (b.isNull()) return false; // +0x0
+			var c = b.add(0x20).readPointer();        if (c.isNull()) return false; // +0x20 -> 本地玩家对象
+			return c.add(0xF0).readU8() === 3;                                    // AActor::Role == ROLE_Authority
+		} catch (e) { return false; }
+	}
+
 	Interceptor.attach(IsFloat, {
 		onEnter: function (args) {
-			const ADH_HumanCharacter = this.context.rdi;
-			if(base.add(0x4C70908).readPointer().readPointer().add(0x20).readPointer().add(0xF0).readU8() == 3)
-			{
+			if (isLocalAuthority()) {
 				this.context.rax = (this.context.rax & 0xFFFFFFFFFFFFFF00) | 0x01;
 			}
 		}
